@@ -330,6 +330,8 @@
       <p class="text-sm text-gray-600 dark:text-gray-400">Produk: <span id="editVsmProdukInfo" class="font-semibold text-gray-900 dark:text-white"></span></p>
      </div>
      <div id="editVsmProcessList" class="space-y-4 mb-6"></div>
+     <div class="mb-4"><button id="addEditProcessBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"> <i class="fas fa-plus mr-2"></i>TAMBAH PROSES BARU </button>
+     </div>
      <div class="flex gap-2"><button id="saveEditVsmBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-save mr-2"></i>SIMPAN PERUBAHAN </button> <button id="cancelEditVsmBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-times mr-2"></i>BATAL </button>
      </div>
     </div>
@@ -1234,8 +1236,11 @@
         });
         
         card.innerHTML = `
-          <div class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600">
+          <div class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600 flex justify-between items-center">
             <h4 class="font-semibold text-gray-900 dark:text-white">PROSES ${idx + 1}</h4>
+            <button class="delete-edit-process-btn text-red-600 hover:text-red-700" data-idx="${idx}">
+              <i class="fas fa-trash"></i> HAPUS
+            </button>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -1298,12 +1303,58 @@
           editVsmData[idx].personil = selectedPersonil.join(', ');
         });
       });
+      
+      // Handle delete process
+      document.querySelectorAll('.delete-edit-process-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.dataset.idx);
+          
+          if (editVsmData.length === 1) {
+            showToast('MINIMAL HARUS ADA 1 PROSES', 'error');
+            return;
+          }
+          
+          editVsmData.splice(idx, 1);
+          renderEditVsmProcessList();
+          showToast('PROSES DIHAPUS', 'success');
+        });
+      });
     }
     
     document.getElementById('cancelEditVsmBtn').addEventListener('click', () => {
       document.getElementById('editVsmModal').classList.add('hidden');
       document.getElementById('editVsmModal').classList.remove('flex');
       editVsmData = [];
+    });
+    
+    document.getElementById('addEditProcessBtn').addEventListener('click', () => {
+      if (editVsmData.length === 0) return;
+      
+      const firstProcess = editVsmData[0];
+      const newProcess = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        area: firstProcess.area,
+        kode_produk: firstProcess.kode_produk,
+        nama_produk: firstProcess.nama_produk,
+        proses_name: '',
+        mesin: '',
+        durasi: 0,
+        personil: '',
+        problems: '',
+        order: editVsmData.length,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      editVsmData.push(newProcess);
+      renderEditVsmProcessList();
+      showToast('PROSES BARU DITAMBAHKAN', 'success');
+      
+      // Scroll ke proses baru
+      setTimeout(() => {
+        const container = document.getElementById('editVsmProcessList');
+        container.scrollTop = container.scrollHeight;
+      }, 100);
     });
     
     document.getElementById('saveEditVsmBtn').addEventListener('click', async () => {
@@ -1321,18 +1372,38 @@
       saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>MENYIMPAN...';
       
       try {
-        for (const process of editVsmData) {
+        // Hapus semua proses lama untuk produk ini
+        const kodeProduk = editVsmData[0].kode_produk;
+        const oldProcesses = allData.vsm.filter(d => d.kode_produk === kodeProduk);
+        
+        for (const oldProcess of oldProcesses) {
           const { error } = await supabaseClient
             .from('vsm')
-            .update({
+            .delete()
+            .eq('id', oldProcess.id);
+          
+          if (error) throw error;
+        }
+        
+        // Insert semua proses baru (termasuk yang ditambahkan)
+        for (let i = 0; i < editVsmData.length; i++) {
+          const process = editVsmData[i];
+          const { error } = await supabaseClient
+            .from('vsm')
+            .insert([{
+              id: process.id,
+              area: process.area,
+              kode_produk: process.kode_produk,
+              nama_produk: process.nama_produk,
               proses_name: process.proses_name,
               mesin: process.mesin,
               durasi: process.durasi,
               personil: process.personil,
               problems: process.problems,
+              order: i,
+              created_at: process.created_at,
               updated_at: new Date().toISOString()
-            })
-            .eq('id', process.id);
+            }]);
           
           if (error) throw error;
         }
@@ -1353,6 +1424,17 @@
         saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>SIMPAN PERUBAHAN';
       }
     });
+    
+    window.removeEditProcess = function(idx) {
+      if (editVsmData.length === 1) {
+        showToast('MINIMAL HARUS ADA 1 PROSES', 'error');
+        return;
+      }
+      
+      editVsmData.splice(idx, 1);
+      renderEditVsmProcessList();
+      showToast('PROSES DIHAPUS', 'success');
+    };
     
     window.deleteVsmGroup = async function(kodeProduk) {
       const vsmItems = allData.vsm.filter(d => d.kode_produk === kodeProduk);
@@ -1740,5 +1822,5 @@
     setInterval(updateDateTime, 1000);
     initApp();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c03acb741548740',t:'MTc2ODc5Nzg0My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c04f0e09518c211',t:'MTc2ODgxMTEyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
