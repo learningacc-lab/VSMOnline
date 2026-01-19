@@ -1,0 +1,1532 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Value Stream Mapping System</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .dark {
+      color-scheme: dark;
+    }
+    
+    .process-card {
+      transition: all 0.3s ease;
+    }
+    
+    .process-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    
+    .dark .process-card:hover {
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+    
+    .toast {
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .modal-backdrop {
+      animation: fadeIn 0.2s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .vsm-flow {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      overflow-x: auto;
+      padding: 1rem 0;
+    }
+    
+    .vsm-arrow {
+      font-size: 1.5rem;
+      color: #3b82f6;
+    }
+    
+    .dark .vsm-arrow {
+      color: #60a5fa;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full w-full overflow-auto bg-gray-50 dark:bg-gray-900 transition-colors duration-200"><!-- Toast Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div><!-- Main Container -->
+  <div class="w-full min-h-full flex flex-col"><!-- Header -->
+   <header class="bg-white dark:bg-gray-800 shadow-md transition-colors duration-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+     <div class="flex justify-between items-center">
+      <div>
+       <h1 class="text-2xl font-bold text-gray-900 dark:text-white" id="appTitle">Value Stream Mapping</h1>
+       <p class="text-sm text-gray-600 dark:text-gray-400" id="companyName">System Management</p>
+      </div>
+      <div class="flex items-center gap-4">
+       <div class="text-right">
+        <p class="text-sm font-medium text-gray-900 dark:text-white" id="currentTime"></p>
+        <p class="text-xs text-gray-600 dark:text-gray-400" id="currentDate"></p>
+       </div><button id="themeToggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"> <i class="fas fa-moon dark:hidden"></i> <i class="fas fa-sun hidden dark:inline"></i> </button>
+      </div>
+     </div>
+    </div>
+   </header><!-- Navigation -->
+   <nav class="bg-blue-600 dark:bg-blue-800 shadow-lg transition-colors duration-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+     <div class="flex space-x-1 overflow-x-auto"><button class="nav-btn px-6 py-3 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-900 transition-colors whitespace-nowrap" data-page="dashboard"> <i class="fas fa-chart-line mr-2"></i>Dashboard </button> <button class="nav-btn px-6 py-3 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-900 transition-colors whitespace-nowrap" data-page="input"> <i class="fas fa-plus-circle mr-2"></i>Input VSM </button> <button class="nav-btn px-6 py-3 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-900 transition-colors whitespace-nowrap" data-page="management"> <i class="fas fa-cog mr-2"></i>VSM Management </button> <button class="nav-btn px-6 py-3 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-900 transition-colors whitespace-nowrap" data-page="history"> <i class="fas fa-history mr-2"></i>History </button>
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"><!-- Dashboard Page -->
+    <div id="dashboardPage" class="page-content">
+     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard VSM</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+       <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih Area</label> <select id="dashboardArea" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">-- Pilih Area --</option> <option value="INJEKSI">INJEKSI</option> <option value="NON INJEKSI">NON INJEKSI</option> </select>
+       </div>
+       <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih Produk</label> <select id="dashboardProduk" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" disabled> <option value="">-- Pilih Area Dulu --</option> </select>
+       </div>
+      </div>
+      <div id="vsmDisplay" class="hidden">
+       <div class="bg-blue-50 dark:bg-gray-700 rounded-lg p-6 mb-6 transition-colors duration-200">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2" id="vsmProdukTitle"></h3>
+        <p class="text-gray-600 dark:text-gray-400" id="vsmProdukCode"></p>
+        <div class="mt-4 pt-4 border-t border-blue-200 dark:border-gray-600">
+         <p class="text-sm text-gray-600 dark:text-gray-400">Total Durasi Proses</p>
+         <p class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="vsmTotalDurasi">0 menit</p>
+        </div>
+       </div>
+       <div class="mb-4">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Value Stream Map</h4>
+        <div id="vsmFlowContainer" class="vsm-flow"></div>
+       </div><!-- Cara Membaca VSM -->
+       <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-lg p-6 mb-6 border-l-4 border-blue-600">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center"><i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mr-2"></i> Cara Membaca VSM</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div class="flex items-start">
+           <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-red-600 text-xl mr-3"></i>
+           </div>
+           <div>
+            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Icon Segitiga Merah</h5>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Menandai <strong>bottleneck</strong> (proses dengan durasi terlama)</p>
+           </div>
+          </div>
+         </div>
+         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div class="flex items-start">
+           <div class="flex-shrink-0"><span class="inline-block bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">30%</span>
+           </div>
+           <div>
+            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Badge Merah (≥30%)</h5>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Kontribusi waktu sangat tinggi, prioritas utama untuk improvement</p>
+           </div>
+          </div>
+         </div>
+         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div class="flex items-start">
+           <div class="flex-shrink-0"><span class="inline-block bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">25%</span>
+           </div>
+           <div>
+            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Badge Orange (20-29%)</h5>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Kontribusi waktu tinggi, perlu perhatian khusus</p>
+           </div>
+          </div>
+         </div>
+         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div class="flex items-start">
+           <div class="flex-shrink-0"><span class="inline-block bg-yellow-500 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">18%</span>
+           </div>
+           <div>
+            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Badge Kuning (15-19%)</h5>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Kontribusi waktu sedang, monitoring rutin</p>
+           </div>
+          </div>
+         </div>
+         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div class="flex items-start">
+           <div class="flex-shrink-0"><span class="inline-block bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">10%</span>
+           </div>
+           <div>
+            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Badge Hijau (&lt;15%)</h5>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Kontribusi waktu rendah, sudah efisien</p>
+           </div>
+          </div>
+         </div>
+         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div class="flex items-start">
+           <div class="flex-shrink-0"><i class="fas fa-arrow-right text-blue-600 text-xl mr-3"></i>
+           </div>
+           <div>
+            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Alur Proses</h5>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Panah menunjukkan urutan flow dari proses awal hingga akhir</p>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="mt-4 bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500 p-4 rounded">
+         <p class="text-sm text-yellow-800 dark:text-yellow-200"><i class="fas fa-lightbulb mr-2"></i> <strong>Tips:</strong> Fokuskan improvement pada proses dengan badge merah/orange dan yang memiliki icon segitiga merah (bottleneck) untuk hasil maksimal dalam mengurangi lead time!</p>
+        </div>
+       </div>
+       <div id="processDetails" class="hidden mt-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-6 transition-colors duration-200">
+        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Detail Proses</h4>
+        <div id="processDetailsContent"></div>
+       </div>
+      </div>
+      <div id="noVsmMessage" class="text-center py-12 text-gray-500 dark:text-gray-400"><i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
+       <p>Pilih area dan produk untuk melihat VSM</p>
+      </div>
+     </div>
+    </div><!-- Input VSM Page -->
+    <div id="inputPage" class="page-content hidden">
+     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Input VSM</h2>
+      <div id="inputLoginForm" class="max-w-md mx-auto">
+       <div class="bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 p-4 mb-6">
+        <p class="text-sm text-yellow-800 dark:text-yellow-200"><i class="fas fa-lock mr-2"></i>Login management diperlukan untuk mengakses halaman ini</p>
+       </div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password Management</label> <input type="password" id="inputPassword" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Masukkan password"> <button id="inputLoginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Login </button>
+      </div>
+      <div id="inputVsmForm" class="hidden">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">AREA <span class="text-red-500">*</span></label> <select id="inputArea" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">-- PILIH AREA --</option> <option value="INJEKSI">INJEKSI</option> <option value="NON INJEKSI">NON INJEKSI</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PRODUK <span class="text-red-500">*</span></label> <select id="inputProdukDropdown" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" disabled> <option value="">-- PILIH AREA DULU --</option> </select>
+        </div>
+       </div>
+       <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">PROSES</h3>
+        <div id="processList" class="space-y-4 mb-6"></div>
+        <div class="flex gap-2"><button id="addProcessBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"> <i class="fas fa-plus mr-2"></i>ADD PROSES </button> <button id="submitVsmBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors" disabled> <i class="fas fa-check mr-2"></i>SUBMIT VSM </button>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div><!-- VSM Management Page -->
+    <div id="managementPage" class="page-content hidden">
+     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">VSM Management</h2>
+      <div id="managementLoginForm" class="max-w-md mx-auto">
+       <div class="bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 p-4 mb-6">
+        <p class="text-sm text-yellow-800 dark:text-yellow-200"><i class="fas fa-lock mr-2"></i>Login management diperlukan untuk mengakses halaman ini</p>
+       </div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password Management</label> <input type="password" id="managementPassword" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Masukkan password"> <button id="managementLoginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Login </button>
+      </div>
+      <div id="managementContent" class="hidden">
+       <div class="mb-6">
+        <div class="border-b border-gray-200 dark:border-gray-700">
+         <nav class="flex space-x-1 overflow-x-auto"><button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="proses"> Proses </button> <button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="mesin"> Mesin </button> <button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="personil"> Personil </button> <button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="produk"> Produk </button> <button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="vsm"> List VSM </button>
+         </nav>
+        </div>
+       </div>
+       <div id="mgmtTabContent"></div>
+      </div>
+     </div>
+    </div><!-- History Page -->
+    <div id="historyPage" class="page-content hidden">
+     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">History</h2>
+      <div id="historyLoginForm" class="max-w-md mx-auto">
+       <div class="bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 p-4 mb-6">
+        <p class="text-sm text-yellow-800 dark:text-yellow-200"><i class="fas fa-lock mr-2"></i>Login management diperlukan untuk mengakses halaman ini</p>
+       </div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password Management</label> <input type="password" id="historyPassword" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Masukkan password"> <button id="historyLoginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Login </button>
+      </div>
+      <div id="historyContent" class="hidden">
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tanggal Dari</label> <input type="date" id="historyDateFrom" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tanggal Sampai</label> <input type="date" id="historyDateTo" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kode Produk</label> <select id="historyKodeProduk" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">Semua produk</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Personil</label> <select id="historyPersonil" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">Semua personil</option> </select>
+        </div>
+       </div>
+       <div class="flex gap-2 mb-6"><button id="historyFilterBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"> <i class="fas fa-filter mr-2"></i>Filter </button> <button id="historyResetBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg transition-colors"> <i class="fas fa-redo mr-2"></i>Reset </button> <button id="historyDownloadBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors ml-auto"> <i class="fas fa-download mr-2"></i>Download PDF </button>
+       </div>
+       <div id="historyTableContainer" class="overflow-x-auto">
+        <table class="w-full">
+         <thead class="bg-gray-100 dark:bg-gray-700">
+          <tr>
+           <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Tanggal &amp; Waktu</th>
+           <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Tipe Aktivitas</th>
+           <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Deskripsi</th>
+           <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">User</th>
+          </tr>
+         </thead>
+         <tbody id="historyTableBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+        </table>
+       </div>
+       <div id="noHistoryMessage" class="text-center py-12 text-gray-500 dark:text-gray-400 hidden"><i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
+        <p>Belum ada history data</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div><!-- Process Modal -->
+  <div id="processModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden items-center justify-center z-40 p-4">
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">ADD PROSES</h3>
+     <div class="space-y-4">
+      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">NAMA PROSES <span class="text-red-500">*</span></label> <select id="modalProsesName" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">-- PILIH PROSES --</option> </select>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">NAMA MESIN <span class="text-red-500">*</span></label> <select id="modalMesin" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">-- PILIH MESIN --</option> </select>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ESTIMASI DURASI PER BATCH (MENIT) <span class="text-red-500">*</span></label> <input type="number" id="modalDurasi" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="CONTOH: 30" min="1">
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PERSONIL BERKOMPETEN <span class="text-red-500">*</span></label>
+       <div id="modalPersonilCheckboxes" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-48 overflow-y-auto space-y-2"><!-- Checkboxes will be populated here -->
+       </div>
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PROBLEMS</label> <textarea id="modalProblems" rows="3" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="TAMBAHKAN PROBLEM JIKA ADA" style="text-transform: uppercase"></textarea>
+      </div>
+     </div>
+     <div class="flex gap-2 mt-6"><button id="saveProcessBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-save mr-2"></i>SAVE PROSES </button> <button id="cancelProcessBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-times mr-2"></i>CANCEL </button>
+     </div>
+    </div>
+   </div>
+  </div><!-- PDF Password Modal -->
+  <div id="pdfPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden items-center justify-center z-40 p-4">
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Verifikasi Admin</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Masukkan password admin untuk download PDF</p><input type="password" id="pdfPasswordInput" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Password">
+    <div class="flex gap-2"><button id="confirmPdfDownloadBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Download </button> <button id="cancelPdfDownloadBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Cancel </button>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://sezgqdusjqsdoxmubzsm.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlemdxZHVzanFzZG94bXVienNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3ODA0MTMsImV4cCI6MjA4NDM1NjQxM30.GFAdhXdoMtJOmlgjC-qwzuiJ8I6AMym6pwTsfQmGqbg';
+    let supabaseClient;
+    
+    // Initialize Supabase hanya sekali
+    if (!window.vsmSupabase) {
+      window.vsmSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    supabaseClient = window.vsmSupabase;
+    
+    const defaultConfig = {
+      app_title: "Value Stream Mapping",
+      company_name: "System Management",
+      primary_color: "#2563eb"
+    };
+    
+    let allData = {
+      master_proses: [],
+      master_mesin: [],
+      master_personil: [],
+      master_produk: [],
+      vsm: [],
+      activity_log: []
+    };
+    let currentPage = 'dashboard';
+    let tempProcesses = [];
+    let isInputLoggedIn = false;
+    let isManagementLoggedIn = false;
+    let isHistoryLoggedIn = false;
+    const ADMIN_PASSWORD = 'admin123';
+    
+    // Load all data from Supabase
+    async function loadAllData() {
+      try {
+        const tables = ['master_proses', 'master_mesin', 'master_personil', 'master_produk', 'vsm', 'activity_log'];
+        
+        for (const table of tables) {
+          const { data, error } = await supabaseClient
+            .from(table)
+            .select('*')
+            .order('created_at', { ascending: false });
+          
+          if (error) throw error;
+          allData[table] = data || [];
+        }
+        
+        updateUI();
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showToast('Gagal memuat data', 'error');
+      }
+    }
+    
+    // Initialize app
+    async function initApp() {
+      await loadAllData();
+      
+      // Setup realtime subscriptions for all tables
+      const tables = ['master_proses', 'master_mesin', 'master_personil', 'master_produk', 'vsm', 'activity_log'];
+      
+      tables.forEach(table => {
+        supabaseClient
+          .channel(`${table}_changes`)
+          .on('postgres_changes', 
+            { event: '*', schema: 'public', table: table },
+            () => {
+              loadAllData();
+            }
+          )
+          .subscribe();
+      });
+      
+      if (window.elementSdk) {
+        await window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+            document.getElementById('companyName').textContent = config.company_name || defaultConfig.company_name;
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ["app_title", config.app_title || defaultConfig.app_title],
+            ["company_name", config.company_name || defaultConfig.company_name]
+          ])
+        });
+      }
+    }
+    
+    function updateUI() {
+      if (currentPage === 'dashboard') {
+        updateDashboard();
+      } else if (currentPage === 'history') {
+        filterHistory();
+      } else if (currentPage === 'management' && isManagementLoggedIn) {
+        updateManagementContent();
+      }
+    }
+    
+    async function logActivity(activityType, description) {
+      try {
+        const activity = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          activity_type: activityType,
+          description: description,
+          user: 'admin',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        const { error } = await supabaseClient
+          .from('activity_log')
+          .insert([activity]);
+        
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error logging activity:', error);
+      }
+    }
+    
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast px-6 py-3 rounded-lg shadow-lg text-white ${
+        type === 'success' ? 'bg-green-600' : 
+        type === 'error' ? 'bg-red-600' : 
+        'bg-blue-600'
+      }`;
+      toast.textContent = message;
+      
+      document.getElementById('toastContainer').appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+    
+    function updateDateTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      
+      document.getElementById('currentTime').textContent = timeStr;
+      document.getElementById('currentDate').textContent = dateStr;
+    }
+    
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+    
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    
+    // Load saved theme
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+    
+    // Navigation
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const page = btn.dataset.page;
+        
+        if (page === 'input' || page === 'management' || page === 'history') {
+          if (page === 'input') {
+            isInputLoggedIn = false;
+          } else if (page === 'management') {
+            isManagementLoggedIn = false;
+          } else if (page === 'history') {
+            isHistoryLoggedIn = false;
+          }
+        }
+        
+        if ((page === 'input' || page === 'management' || page === 'history') && 
+            ((page === 'input' && !isInputLoggedIn) || 
+             (page === 'management' && !isManagementLoggedIn) || 
+             (page === 'history' && !isHistoryLoggedIn))) {
+          currentPage = page;
+          
+          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-blue-700', 'dark:bg-blue-900'));
+          btn.classList.add('bg-blue-700', 'dark:bg-blue-900');
+          
+          document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+          document.getElementById(page + 'Page').classList.remove('hidden');
+          
+          if (page === 'input') {
+            document.getElementById('inputLoginForm').classList.remove('hidden');
+            document.getElementById('inputVsmForm').classList.add('hidden');
+            document.getElementById('inputPassword').value = '';
+          } else if (page === 'management') {
+            document.getElementById('managementLoginForm').classList.remove('hidden');
+            document.getElementById('managementContent').classList.add('hidden');
+            document.getElementById('managementPassword').value = '';
+          } else if (page === 'history') {
+            document.getElementById('historyLoginForm').classList.remove('hidden');
+            document.getElementById('historyContent').classList.add('hidden');
+            document.getElementById('historyPassword').value = '';
+          }
+          return;
+        }
+        
+        currentPage = page;
+        
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-blue-700', 'dark:bg-blue-900'));
+        btn.classList.add('bg-blue-700', 'dark:bg-blue-900');
+        
+        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+        document.getElementById(page + 'Page').classList.remove('hidden');
+        
+        if (page === 'dashboard') {
+          document.getElementById('dashboardArea').value = '';
+          document.getElementById('dashboardProduk').value = '';
+          document.getElementById('dashboardProduk').disabled = true;
+          document.getElementById('dashboardProduk').innerHTML = '<option value="">-- Pilih Area Dulu --</option>';
+          document.getElementById('vsmDisplay').classList.add('hidden');
+          document.getElementById('noVsmMessage').classList.remove('hidden');
+        }
+        
+        if (page === 'history' && isHistoryLoggedIn) {
+          filterHistory();
+        }
+      });
+    });
+    
+    document.querySelector('.nav-btn').classList.add('bg-blue-700', 'dark:bg-blue-900');
+    
+    // Dashboard functionality
+    document.getElementById('dashboardArea').addEventListener('change', (e) => {
+      const area = e.target.value;
+      const produkSelect = document.getElementById('dashboardProduk');
+      
+      if (!area) {
+        produkSelect.disabled = true;
+        produkSelect.innerHTML = '<option value="">-- Pilih Area Dulu --</option>';
+        document.getElementById('vsmDisplay').classList.add('hidden');
+        document.getElementById('noVsmMessage').classList.remove('hidden');
+        return;
+      }
+      
+      const vsmData = allData.vsm.filter(d => d.area.toUpperCase() === area.toUpperCase());
+      const products = [...new Set(vsmData.map(d => d.kode_produk))];
+      
+      produkSelect.disabled = false;
+      produkSelect.innerHTML = '<option value="">-- Pilih Produk --</option>';
+      products.forEach(kode => {
+        const item = vsmData.find(d => d.kode_produk === kode);
+        if (item) {
+          const option = document.createElement('option');
+          option.value = kode;
+          option.textContent = `${kode} - ${item.nama_produk}`;
+          produkSelect.appendChild(option);
+        }
+      });
+    });
+    
+    document.getElementById('dashboardProduk').addEventListener('change', (e) => {
+      const kodeProduk = e.target.value;
+      if (!kodeProduk) {
+        document.getElementById('vsmDisplay').classList.add('hidden');
+        document.getElementById('noVsmMessage').classList.remove('hidden');
+        return;
+      }
+      
+      displayVSM(kodeProduk);
+    });
+    
+    function displayVSM(kodeProduk) {
+      const vsmData = allData.vsm.filter(d => d.kode_produk === kodeProduk).sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      if (vsmData.length === 0) {
+        document.getElementById('vsmDisplay').classList.add('hidden');
+        document.getElementById('noVsmMessage').classList.remove('hidden');
+        return;
+      }
+      
+      const firstItem = vsmData[0];
+      document.getElementById('vsmProdukTitle').textContent = firstItem.nama_produk;
+      document.getElementById('vsmProdukCode').textContent = `Kode: ${firstItem.kode_produk} | Area: ${firstItem.area}`;
+      
+      const totalDurasi = vsmData.reduce((sum, process) => sum + (process.durasi || 0), 0);
+      const totalHari = (totalDurasi / (60 * 24)).toFixed(2);
+      document.getElementById('vsmTotalDurasi').textContent = `${totalDurasi} menit (${totalHari} hari)`;
+      
+      const maxDurasi = Math.max(...vsmData.map(p => p.durasi));
+      
+      const flowContainer = document.getElementById('vsmFlowContainer');
+      flowContainer.innerHTML = '';
+      
+      vsmData.forEach((process, idx) => {
+        const percentage = ((process.durasi / totalDurasi) * 100).toFixed(1);
+        const isBottleneck = process.durasi === maxDurasi;
+        
+        let badgeColor = 'bg-green-500';
+        
+        if (percentage >= 30) {
+          badgeColor = 'bg-red-500';
+        } else if (percentage >= 20) {
+          badgeColor = 'bg-orange-500';
+        } else if (percentage >= 15) {
+          badgeColor = 'bg-yellow-500';
+        }
+        
+        const card = document.createElement('div');
+        card.className = `process-card bg-white dark:bg-gray-700 rounded-lg shadow p-4 cursor-pointer min-w-[220px] relative`;
+        card.innerHTML = `
+          ${isBottleneck ? '<div class="absolute top-2 right-2"><i class="fas fa-exclamation-triangle text-red-600 text-lg"></i></div>' : ''}
+          <div class="text-center">
+            <div class="bg-blue-100 dark:bg-blue-900 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
+              <span class="text-blue-600 dark:text-blue-300 font-bold">${idx + 1}</span>
+            </div>
+            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">${process.proses_name}</h5>
+            <p class="text-sm text-gray-600 dark:text-gray-400">${process.durasi} menit</p>
+            <div class="mt-3">
+              <div class="${badgeColor} text-white text-sm font-bold px-3 py-1 rounded-full inline-block">
+                ${percentage}%
+              </div>
+            </div>
+          </div>
+        `;
+        
+        card.addEventListener('click', () => showProcessDetail(process));
+        flowContainer.appendChild(card);
+        
+        if (idx < vsmData.length - 1) {
+          const arrow = document.createElement('div');
+          arrow.className = 'vsm-arrow';
+          arrow.innerHTML = '<i class="fas fa-arrow-right"></i>';
+          flowContainer.appendChild(arrow);
+        }
+      });
+      
+      document.getElementById('vsmDisplay').classList.remove('hidden');
+      document.getElementById('noVsmMessage').classList.add('hidden');
+      document.getElementById('processDetails').classList.add('hidden');
+    }
+    
+    function showProcessDetail(process) {
+      const detailContent = document.getElementById('processDetailsContent');
+      detailContent.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Nama Proses</p>
+            <p class="font-semibold text-gray-900 dark:text-white">${process.proses_name}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Mesin</p>
+            <p class="font-semibold text-gray-900 dark:text-white">${process.mesin}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Durasi</p>
+            <p class="font-semibold text-gray-900 dark:text-white">${process.durasi} menit</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Personil</p>
+            <p class="font-semibold text-gray-900 dark:text-white">${process.personil}</p>
+          </div>
+          ${process.problems ? `
+          <div class="md:col-span-2">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Problems</p>
+            <p class="font-semibold text-gray-900 dark:text-white">${process.problems}</p>
+          </div>
+          ` : ''}
+        </div>
+      `;
+      
+      document.getElementById('processDetails').classList.remove('hidden');
+    }
+    
+    function updateDashboard() {
+      const areaSelect = document.getElementById('dashboardArea');
+      const currentArea = areaSelect.value;
+      
+      if (currentArea) {
+        areaSelect.dispatchEvent(new Event('change'));
+      }
+    }
+    
+    // Input VSM functionality
+    document.getElementById('inputLoginBtn').addEventListener('click', () => {
+      const password = document.getElementById('inputPassword').value;
+      
+      if (password === ADMIN_PASSWORD) {
+        isInputLoggedIn = true;
+        document.getElementById('inputLoginForm').classList.add('hidden');
+        document.getElementById('inputVsmForm').classList.remove('hidden');
+        showToast('Login berhasil', 'success');
+      } else {
+        showToast('Password salah', 'error');
+      }
+    });
+    
+    document.getElementById('inputArea').addEventListener('change', (e) => {
+      const area = e.target.value;
+      const produkSelect = document.getElementById('inputProdukDropdown');
+      
+      if (!area) {
+        produkSelect.disabled = true;
+        produkSelect.innerHTML = '<option value="">-- PILIH AREA DULU --</option>';
+        return;
+      }
+      
+      const masterProducts = allData.master_produk.filter(d => d.area === area);
+      
+      produkSelect.disabled = false;
+      produkSelect.innerHTML = '<option value="">-- PILIH PRODUK --</option>';
+      masterProducts.forEach(produk => {
+        const option = document.createElement('option');
+        option.value = JSON.stringify({ kode: produk.kode_produk, nama: produk.nama_produk });
+        option.textContent = `${produk.kode_produk} - ${produk.nama_produk}`;
+        produkSelect.appendChild(option);
+      });
+    });
+    
+    document.getElementById('addProcessBtn').addEventListener('click', () => {
+      const area = document.getElementById('inputArea').value;
+      const produkData = document.getElementById('inputProdukDropdown').value;
+      
+      if (!area || !produkData) {
+        showToast('PILIH AREA DAN PRODUK TERLEBIH DAHULU', 'error');
+        return;
+      }
+      
+      const prosesList = allData.master_proses;
+      const mesinList = allData.master_mesin;
+      const personilList = allData.master_personil;
+      
+      const prosesSelect = document.getElementById('modalProsesName');
+      const mesinSelect = document.getElementById('modalMesin');
+      
+      prosesSelect.innerHTML = '<option value="">-- PILIH PROSES --</option>';
+      prosesList.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        prosesSelect.appendChild(opt);
+      });
+      
+      mesinSelect.innerHTML = '<option value="">-- PILIH MESIN --</option>';
+      mesinList.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.name;
+        opt.textContent = m.name;
+        mesinSelect.appendChild(opt);
+      });
+      
+      const personilContainer = document.getElementById('modalPersonilCheckboxes');
+      personilContainer.innerHTML = '';
+      
+      if (personilList.length === 0) {
+        personilContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Belum ada data personil</p>';
+      } else {
+        personilList.forEach(p => {
+          const checkboxDiv = document.createElement('div');
+          checkboxDiv.className = 'flex items-center';
+          checkboxDiv.innerHTML = `
+            <input type="checkbox" id="personil_${p.id}" value="${p.name}" class="personil-checkbox w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 focus:ring-2">
+            <label for="personil_${p.id}" class="ml-2 text-sm text-gray-900 dark:text-white cursor-pointer">${p.name}</label>
+          `;
+          personilContainer.appendChild(checkboxDiv);
+        });
+      }
+      
+      document.getElementById('processModal').classList.remove('hidden');
+      document.getElementById('processModal').classList.add('flex');
+      
+      document.getElementById('modalProsesName').value = '';
+      document.getElementById('modalMesin').value = '';
+      document.getElementById('modalDurasi').value = '';
+      document.getElementById('modalProblems').value = '';
+      document.querySelectorAll('.personil-checkbox').forEach(cb => cb.checked = false);
+    });
+    
+    document.getElementById('cancelProcessBtn').addEventListener('click', () => {
+      document.getElementById('processModal').classList.add('hidden');
+      document.getElementById('processModal').classList.remove('flex');
+    });
+    
+    document.getElementById('saveProcessBtn').addEventListener('click', async () => {
+      const prosesName = document.getElementById('modalProsesName').value.trim();
+      const mesin = document.getElementById('modalMesin').value.trim();
+      const durasi = document.getElementById('modalDurasi').value;
+      const problems = document.getElementById('modalProblems').value.trim();
+      
+      const selectedPersonil = Array.from(document.querySelectorAll('.personil-checkbox:checked')).map(cb => cb.value);
+      const personil = selectedPersonil.join(', ');
+      
+      if (!prosesName || !mesin || !durasi || selectedPersonil.length === 0) {
+        showToast('LENGKAPI SEMUA FIELD YANG WAJIB DIISI', 'error');
+        return;
+      }
+      
+      const area = document.getElementById('inputArea').value;
+      const produkData = JSON.parse(document.getElementById('inputProdukDropdown').value);
+      
+      const saveBtn = document.getElementById('saveProcessBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>MENYIMPAN...';
+      
+      try {
+        const newProcess = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          area: area,
+          kode_produk: produkData.kode,
+          nama_produk: produkData.nama,
+          proses_name: prosesName,
+          mesin: mesin,
+          durasi: parseInt(durasi),
+          personil: personil,
+          problems: problems,
+          order: tempProcesses.length,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        const { error } = await supabaseClient
+          .from('vsm')
+          .insert([newProcess]);
+        
+        if (error) throw error;
+        
+        tempProcesses.push(newProcess);
+        renderProcessList();
+        
+        document.getElementById('submitVsmBtn').disabled = false;
+        
+        await logActivity('TAMBAH PROSES', `Menambahkan proses ${prosesName} untuk produk ${produkData.kode} (${produkData.nama})`);
+        
+        showToast('PROSES BERHASIL DITAMBAHKAN', 'success');
+        
+        document.getElementById('processModal').classList.add('hidden');
+        document.getElementById('processModal').classList.remove('flex');
+      } catch (error) {
+        console.error('Error saving process:', error);
+        showToast('GAGAL MENYIMPAN PROSES', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>SAVE PROSES';
+      }
+    });
+    
+    function renderProcessList() {
+      const container = document.getElementById('processList');
+      container.innerHTML = '';
+      
+      if (tempProcesses.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">Belum ada proses ditambahkan</p>';
+        return;
+      }
+      
+      tempProcesses.forEach((process, idx) => {
+        const card = document.createElement('div');
+        card.className = 'bg-blue-50 dark:bg-gray-700 rounded-lg p-4';
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-900 dark:text-white">${idx + 1}. ${process.proses_name}</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Mesin: ${process.mesin} | Durasi: ${process.durasi} menit</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Personil: ${process.personil}</p>
+              ${process.problems ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Problem: ${process.problems}</p>` : ''}
+            </div>
+            <button class="text-red-600 hover:text-red-700 ml-2" onclick="removeProcess(${idx})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+    
+    window.removeProcess = async function(idx) {
+      const process = tempProcesses[idx];
+      
+      const deleteBtn = event.target.closest('button');
+      deleteBtn.disabled = true;
+      deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      
+      try {
+        const { error } = await supabaseClient
+          .from('vsm')
+          .delete()
+          .eq('id', process.id);
+        
+        if (error) throw error;
+        
+        tempProcesses.splice(idx, 1);
+        renderProcessList();
+        
+        const submitBtn = document.getElementById('submitVsmBtn');
+        submitBtn.disabled = tempProcesses.length === 0;
+        
+        showToast('Proses dihapus', 'success');
+      } catch (error) {
+        console.error('Error deleting process:', error);
+        showToast('Gagal menghapus proses', 'error');
+      } finally {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+      }
+    };
+    
+    document.getElementById('submitVsmBtn').addEventListener('click', async () => {
+      if (tempProcesses.length === 0) {
+        showToast('TAMBAHKAN MINIMAL 1 PROSES', 'error');
+        return;
+      }
+      
+      const submitBtn = document.getElementById('submitVsmBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>MENYIMPAN VSM...';
+      
+      showToast('VSM BERHASIL DISIMPAN!', 'success');
+      
+      tempProcesses = [];
+      document.getElementById('inputArea').value = '';
+      document.getElementById('inputProdukDropdown').value = '';
+      document.getElementById('inputProdukDropdown').disabled = true;
+      document.getElementById('inputProdukDropdown').innerHTML = '<option value="">-- PILIH AREA DULU --</option>';
+      renderProcessList();
+      
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>SUBMIT VSM';
+    });
+    
+    // Management functionality
+    document.getElementById('managementLoginBtn').addEventListener('click', () => {
+      const password = document.getElementById('managementPassword').value;
+      
+      if (password === ADMIN_PASSWORD) {
+        isManagementLoggedIn = true;
+        document.getElementById('managementLoginForm').classList.add('hidden');
+        document.getElementById('managementContent').classList.remove('hidden');
+        
+        document.querySelector('.mgmt-tab').click();
+        
+        showToast('Login berhasil', 'success');
+      } else {
+        showToast('Password salah', 'error');
+      }
+    });
+    
+    let currentMgmtTab = 'proses';
+    
+    document.querySelectorAll('.mgmt-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mgmt-tab').forEach(t => {
+          t.classList.remove('border-blue-600', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400');
+        });
+        tab.classList.add('border-blue-600', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400');
+        
+        currentMgmtTab = tab.dataset.tab;
+        updateManagementContent();
+      });
+    });
+    
+    function updateManagementContent() {
+      const tab = currentMgmtTab;
+      const content = document.getElementById('mgmtTabContent');
+      
+      if (tab === 'proses') {
+        const prosesList = allData.master_proses;
+        content.innerHTML = `
+          <div class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">TAMBAH PROSES BARU</h4>
+            <div class="flex gap-2">
+              <input type="text" id="newProsesName" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="NAMA PROSES" style="text-transform: uppercase">
+              <button onclick="addMasterProses()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>TAMBAH
+              </button>
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${prosesList.length === 0 ? 
+              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA DATA PROSES</p>' :
+              prosesList.map(item => `
+                <div class="bg-white dark:bg-gray-600 rounded-lg p-4 flex justify-between items-center">
+                  <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
+                  <button class="text-red-600 hover:text-red-700" onclick="deleteMasterData('${item.id}', 'master_proses')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `).join('')
+            }
+          </div>
+        `;
+      } else if (tab === 'mesin') {
+        const mesinList = allData.master_mesin;
+        content.innerHTML = `
+          <div class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">TAMBAH MESIN BARU</h4>
+            <div class="flex gap-2">
+              <input type="text" id="newMesinName" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="NAMA MESIN" style="text-transform: uppercase">
+              <button onclick="addMasterMesin()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>TAMBAH
+              </button>
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${mesinList.length === 0 ? 
+              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA DATA MESIN</p>' :
+              mesinList.map(item => `
+                <div class="bg-white dark:bg-gray-600 rounded-lg p-4 flex justify-between items-center">
+                  <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
+                  <button class="text-red-600 hover:text-red-700" onclick="deleteMasterData('${item.id}', 'master_mesin')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `).join('')
+            }
+          </div>
+        `;
+      } else if (tab === 'personil') {
+        const personilList = allData.master_personil;
+        content.innerHTML = `
+          <div class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">TAMBAH PERSONIL BARU</h4>
+            <div class="flex gap-2">
+              <input type="text" id="newPersonilName" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="NAMA PERSONIL" style="text-transform: uppercase">
+              <button onclick="addMasterPersonil()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>TAMBAH
+              </button>
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${personilList.length === 0 ? 
+              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA DATA PERSONIL</p>' :
+              personilList.map(item => `
+                <div class="bg-white dark:bg-gray-600 rounded-lg p-4 flex justify-between items-center">
+                  <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
+                  <button class="text-red-600 hover:text-red-700" onclick="deleteMasterData('${item.id}', 'master_personil')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `).join('')
+            }
+          </div>
+        `;
+      } else if (tab === 'produk') {
+        const produkList = allData.master_produk;
+        content.innerHTML = `
+          <div class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">TAMBAH PRODUK BARU</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <input type="text" id="newProdukKode" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="KODE PRODUK" style="text-transform: uppercase">
+              <input type="text" id="newProdukNama" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="NAMA PRODUK" style="text-transform: uppercase">
+              <select id="newProdukArea" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
+                <option value="">-- PILIH AREA --</option>
+                <option value="INJEKSI">INJEKSI</option>
+                <option value="NON INJEKSI">NON INJEKSI</option>
+              </select>
+            </div>
+            <button onclick="addMasterProduk()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+              <i class="fas fa-plus mr-2"></i>TAMBAH PRODUK
+            </button>
+          </div>
+          <div class="space-y-2">
+            ${produkList.length === 0 ? 
+              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA DATA PRODUK</p>' :
+              produkList.map(item => `
+                <div class="bg-white dark:bg-gray-600 rounded-lg p-4 flex justify-between items-center">
+                  <div>
+                    <span class="font-medium text-gray-900 dark:text-white">${item.kode_produk} - ${item.nama_produk}</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400 ml-4">AREA: ${item.area}</span>
+                  </div>
+                  <button class="text-red-600 hover:text-red-700" onclick="deleteMasterData('${item.id}', 'master_produk')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `).join('')
+            }
+          </div>
+        `;
+      } else if (tab === 'vsm') {
+        const vsmList = allData.vsm;
+        const groupedVsm = {};
+        
+        vsmList.forEach(item => {
+          const key = `${item.area}-${item.kode_produk}`;
+          if (!groupedVsm[key]) {
+            groupedVsm[key] = {
+              area: item.area,
+              kode_produk: item.kode_produk,
+              nama_produk: item.nama_produk,
+              processes: []
+            };
+          }
+          groupedVsm[key].processes.push(item);
+        });
+        
+        content.innerHTML = `
+          <div class="space-y-4">
+            ${Object.values(groupedVsm).length === 0 ? 
+              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA VSM</p>' :
+              Object.values(groupedVsm).map(vsm => `
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <div class="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 class="font-semibold text-gray-900 dark:text-white">${vsm.nama_produk}</h4>
+                      <p class="text-sm text-gray-600 dark:text-gray-400">KODE: ${vsm.kode_produk} | AREA: ${vsm.area}</p>
+                    </div>
+                    <button class="text-red-600 hover:text-red-700" onclick="deleteVsmGroup('${vsm.kode_produk}')">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                  <div class="space-y-2">
+                    ${vsm.processes.sort((a, b) => (a.order || 0) - (b.order || 0)).map((p, idx) => `
+                      <div class="bg-white dark:bg-gray-600 rounded p-3 text-sm">
+                        <span class="font-medium text-gray-900 dark:text-white">${idx + 1}. ${p.proses_name}</span>
+                        <span class="text-gray-600 dark:text-gray-400 ml-2">(${p.durasi} MENIT, ${p.personil})</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')
+            }
+          </div>
+        `;
+      }
+    }
+    
+    window.deleteVsmGroup = async function(kodeProduk) {
+      const vsmItems = allData.vsm.filter(d => d.kode_produk === kodeProduk);
+      
+      if (vsmItems.length === 0) return;
+      
+      const confirmDiv = document.createElement('div');
+      confirmDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      confirmDiv.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">KONFIRMASI HAPUS</h3>
+          <p class="text-gray-600 dark:text-gray-400 mb-6">HAPUS VSM UNTUK PRODUK ${kodeProduk}?</p>
+          <div class="flex gap-2">
+            <button id="confirmDeleteVsm" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg">HAPUS</button>
+            <button id="cancelDeleteVsm" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">BATAL</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(confirmDiv);
+      
+      document.getElementById('cancelDeleteVsm').addEventListener('click', () => {
+        confirmDiv.remove();
+      });
+      
+      document.getElementById('confirmDeleteVsm').addEventListener('click', async () => {
+        const btn = document.getElementById('confirmDeleteVsm');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> MENGHAPUS...';
+        
+        try {
+          for (const item of vsmItems) {
+            const { error } = await supabaseClient
+              .from('vsm')
+              .delete()
+              .eq('id', item.id);
+            
+            if (error) throw error;
+          }
+          
+          await logActivity('HAPUS VSM', `Menghapus VSM untuk produk ${kodeProduk}`);
+          showToast('VSM BERHASIL DIHAPUS', 'success');
+        } catch (error) {
+          console.error('Error deleting VSM:', error);
+          showToast('GAGAL MENGHAPUS VSM', 'error');
+        }
+        
+        confirmDiv.remove();
+      });
+    };
+    
+    // Master data functions
+    window.addMasterProses = async function() {
+      const name = document.getElementById('newProsesName').value.trim().toUpperCase();
+      if (!name) {
+        showToast('MASUKKAN NAMA PROSES', 'error');
+        return;
+      }
+      
+      try {
+        const { error } = await supabaseClient
+          .from('master_proses')
+          .insert([{
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name: name,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+        
+        if (error) throw error;
+        
+        document.getElementById('newProsesName').value = '';
+        await logActivity('TAMBAH MASTER PROSES', `Menambahkan master proses: ${name}`);
+        showToast('PROSES BERHASIL DITAMBAHKAN', 'success');
+      } catch (error) {
+        console.error('Error adding proses:', error);
+        showToast('GAGAL MENAMBAHKAN PROSES', 'error');
+      }
+    };
+    
+    window.addMasterMesin = async function() {
+      const name = document.getElementById('newMesinName').value.trim().toUpperCase();
+      if (!name) {
+        showToast('MASUKKAN NAMA MESIN', 'error');
+        return;
+      }
+      
+      try {
+        const { error } = await supabaseClient
+          .from('master_mesin')
+          .insert([{
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name: name,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+        
+        if (error) throw error;
+        
+        document.getElementById('newMesinName').value = '';
+        await logActivity('TAMBAH MASTER MESIN', `Menambahkan master mesin: ${name}`);
+        showToast('MESIN BERHASIL DITAMBAHKAN', 'success');
+      } catch (error) {
+        console.error('Error adding mesin:', error);
+        showToast('GAGAL MENAMBAHKAN MESIN', 'error');
+      }
+    };
+    
+    window.addMasterPersonil = async function() {
+      const name = document.getElementById('newPersonilName').value.trim().toUpperCase();
+      if (!name) {
+        showToast('MASUKKAN NAMA PERSONIL', 'error');
+        return;
+      }
+      
+      try {
+        const { error } = await supabaseClient
+          .from('master_personil')
+          .insert([{
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name: name,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+        
+        if (error) throw error;
+        
+        document.getElementById('newPersonilName').value = '';
+        await logActivity('TAMBAH MASTER PERSONIL', `Menambahkan master personil: ${name}`);
+        showToast('PERSONIL BERHASIL DITAMBAHKAN', 'success');
+      } catch (error) {
+        console.error('Error adding personil:', error);
+        showToast('GAGAL MENAMBAHKAN PERSONIL', 'error');
+      }
+    };
+    
+    window.addMasterProduk = async function() {
+      const kode = document.getElementById('newProdukKode').value.trim().toUpperCase();
+      const nama = document.getElementById('newProdukNama').value.trim().toUpperCase();
+      const area = document.getElementById('newProdukArea').value;
+      
+      if (!kode || !nama || !area) {
+        showToast('LENGKAPI SEMUA FIELD', 'error');
+        return;
+      }
+      
+      try {
+        const { error } = await supabaseClient
+          .from('master_produk')
+          .insert([{
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            kode_produk: kode,
+            nama_produk: nama,
+            area: area,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }]);
+        
+        if (error) throw error;
+        
+        document.getElementById('newProdukKode').value = '';
+        document.getElementById('newProdukNama').value = '';
+        document.getElementById('newProdukArea').value = '';
+        await logActivity('TAMBAH MASTER PRODUK', `Menambahkan master produk: ${kode} - ${nama} (${area})`);
+        showToast('PRODUK BERHASIL DITAMBAHKAN', 'success');
+      } catch (error) {
+        console.error('Error adding produk:', error);
+        showToast('GAGAL MENAMBAHKAN PRODUK', 'error');
+      }
+    };
+    
+    window.deleteMasterData = async function(id, table) {
+      try {
+        const { error } = await supabaseClient
+          .from(table)
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        
+        await logActivity('HAPUS MASTER DATA', `Menghapus ${table}: ${id}`);
+        showToast('DATA BERHASIL DIHAPUS', 'success');
+      } catch (error) {
+        console.error('Error deleting data:', error);
+        showToast('GAGAL MENGHAPUS DATA', 'error');
+      }
+    };
+    
+    // History login functionality
+    document.getElementById('historyLoginBtn').addEventListener('click', () => {
+      const password = document.getElementById('historyPassword').value;
+      
+      if (password === ADMIN_PASSWORD) {
+        isHistoryLoggedIn = true;
+        document.getElementById('historyLoginForm').classList.add('hidden');
+        document.getElementById('historyContent').classList.remove('hidden');
+        showToast('Login berhasil', 'success');
+        
+        populateHistoryFilters();
+        filterHistory();
+      } else {
+        showToast('Password salah', 'error');
+      }
+    });
+    
+    function populateHistoryFilters() {
+      const vsmData = allData.vsm;
+      const uniqueProducts = [...new Set(vsmData.map(d => d.kode_produk))];
+      
+      const kodeProdukSelect = document.getElementById('historyKodeProduk');
+      kodeProdukSelect.innerHTML = '<option value="">Semua produk</option>';
+      uniqueProducts.forEach(kode => {
+        const opt = document.createElement('option');
+        opt.value = kode;
+        opt.textContent = kode;
+        kodeProdukSelect.appendChild(opt);
+      });
+      
+      const personilList = allData.master_personil;
+      const personilSelect = document.getElementById('historyPersonil');
+      personilSelect.innerHTML = '<option value="">Semua personil</option>';
+      personilList.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        personilSelect.appendChild(opt);
+      });
+    }
+    
+    document.getElementById('historyFilterBtn').addEventListener('click', () => {
+      filterHistory();
+    });
+    
+    document.getElementById('historyResetBtn').addEventListener('click', () => {
+      document.getElementById('historyDateFrom').value = '';
+      document.getElementById('historyDateTo').value = '';
+      document.getElementById('historyKodeProduk').value = '';
+      document.getElementById('historyPersonil').value = '';
+      filterHistory();
+    });
+    
+    function filterHistory() {
+      const dateFrom = document.getElementById('historyDateFrom').value;
+      const dateTo = document.getElementById('historyDateTo').value;
+      const kodeProduk = document.getElementById('historyKodeProduk').value;
+      const personil = document.getElementById('historyPersonil').value;
+      
+      let filtered = allData.activity_log;
+      
+      if (dateFrom) {
+        filtered = filtered.filter(d => new Date(d.created_at) >= new Date(dateFrom));
+      }
+      
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59);
+        filtered = filtered.filter(d => new Date(d.created_at) <= toDate);
+      }
+      
+      if (kodeProduk) {
+        filtered = filtered.filter(d => d.description && d.description.includes(kodeProduk));
+      }
+      
+      if (personil) {
+        filtered = filtered.filter(d => d.description && d.description.includes(personil));
+      }
+      
+      const tbody = document.getElementById('historyTableBody');
+      const noMessage = document.getElementById('noHistoryMessage');
+      const tableContainer = document.getElementById('historyTableContainer');
+      
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        tableContainer.classList.add('hidden');
+        noMessage.classList.remove('hidden');
+        return;
+      }
+      
+      tableContainer.classList.remove('hidden');
+      noMessage.classList.add('hidden');
+      tbody.innerHTML = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(item => `
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+          <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${new Date(item.created_at).toLocaleDateString('id-ID')} ${new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</td>
+          <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${item.activity_type}</td>
+          <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${item.description}</td>
+          <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${item.user}</td>
+        </tr>
+      `).join('');
+    }
+    
+    document.getElementById('historyDownloadBtn').addEventListener('click', () => {
+      document.getElementById('pdfPasswordModal').classList.remove('hidden');
+      document.getElementById('pdfPasswordModal').classList.add('flex');
+      document.getElementById('pdfPasswordInput').value = '';
+    });
+    
+    document.getElementById('cancelPdfDownloadBtn').addEventListener('click', () => {
+      document.getElementById('pdfPasswordModal').classList.add('hidden');
+      document.getElementById('pdfPasswordModal').classList.remove('flex');
+    });
+    
+    document.getElementById('confirmPdfDownloadBtn').addEventListener('click', () => {
+      const password = document.getElementById('pdfPasswordInput').value;
+      
+      if (password === ADMIN_PASSWORD) {
+        document.getElementById('pdfPasswordModal').classList.add('hidden');
+        document.getElementById('pdfPasswordModal').classList.remove('flex');
+        downloadPDF();
+      } else {
+        showToast('Password salah', 'error');
+      }
+    });
+    
+    function downloadPDF() {
+      const dateFrom = document.getElementById('historyDateFrom').value;
+      const dateTo = document.getElementById('historyDateTo').value;
+      const kodeProduk = document.getElementById('historyKodeProduk').value.trim().toLowerCase();
+      const personil = document.getElementById('historyPersonil').value.trim().toLowerCase();
+      
+      let filtered = allData.vsm;
+      
+      if (dateFrom) {
+        filtered = filtered.filter(d => new Date(d.created_at) >= new Date(dateFrom));
+      }
+      
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59);
+        filtered = filtered.filter(d => new Date(d.created_at) <= toDate);
+      }
+      
+      if (kodeProduk) {
+        filtered = filtered.filter(d => d.kode_produk.toLowerCase().includes(kodeProduk));
+      }
+      
+      if (personil) {
+        filtered = filtered.filter(d => d.personil.toLowerCase().includes(personil));
+      }
+      
+      if (filtered.length === 0) {
+        showToast('Tidak ada data untuk didownload', 'error');
+        return;
+      }
+      
+      let pdfContent = 'VALUE STREAM MAPPING HISTORY REPORT\n\n';
+      pdfContent += `Generated: ${new Date().toLocaleString('id-ID')}\n`;
+      pdfContent += `Total Records: ${filtered.length}\n\n`;
+      pdfContent += '='.repeat(80) + '\n\n';
+      
+      filtered.forEach((item, idx) => {
+        pdfContent += `${idx + 1}. ${item.nama_produk} (${item.kode_produk})\n`;
+        pdfContent += `   Area: ${item.area}\n`;
+        pdfContent += `   Proses: ${item.proses_name}\n`;
+        pdfContent += `   Mesin: ${item.mesin}\n`;
+        pdfContent += `   Durasi: ${item.durasi} menit\n`;
+        pdfContent += `   Personil: ${item.personil}\n`;
+        pdfContent += `   Tanggal: ${new Date(item.created_at).toLocaleDateString('id-ID')}\n`;
+        if (item.problems) {
+          pdfContent += `   Problems: ${item.problems}\n`;
+        }
+        pdfContent += '\n' + '-'.repeat(80) + '\n\n';
+      });
+      
+      const blob = new Blob([pdfContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `VSM_History_${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast('File berhasil didownload', 'success');
+    }
+    
+    // Initialize
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    initApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c0367a201d791cc',t:'MTc2ODc5NTAxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
