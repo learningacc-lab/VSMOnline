@@ -321,6 +321,19 @@
     <div class="flex gap-2"><button id="confirmPdfDownloadBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Download </button> <button id="cancelPdfDownloadBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Cancel </button>
     </div>
    </div>
+  </div><!-- Edit VSM Modal -->
+  <div id="editVsmModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden items-center justify-center z-40 p-4">
+   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">EDIT VSM</h3>
+     <div class="mb-4">
+      <p class="text-sm text-gray-600 dark:text-gray-400">Produk: <span id="editVsmProdukInfo" class="font-semibold text-gray-900 dark:text-white"></span></p>
+     </div>
+     <div id="editVsmProcessList" class="space-y-4 mb-6"></div>
+     <div class="flex gap-2"><button id="saveEditVsmBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-save mr-2"></i>SIMPAN PERUBAHAN </button> <button id="cancelEditVsmBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-times mr-2"></i>BATAL </button>
+     </div>
+    </div>
+   </div>
   </div>
   <script>
     // Supabase Configuration
@@ -1140,9 +1153,14 @@
                       <h4 class="font-semibold text-gray-900 dark:text-white">${vsm.nama_produk}</h4>
                       <p class="text-sm text-gray-600 dark:text-gray-400">KODE: ${vsm.kode_produk} | AREA: ${vsm.area}</p>
                     </div>
-                    <button class="text-red-600 hover:text-red-700" onclick="deleteVsmGroup('${vsm.kode_produk}')">
-                      <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="flex gap-2">
+                      <button class="text-blue-600 hover:text-blue-700" onclick="editVsmGroup('${vsm.kode_produk}')">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="text-red-600 hover:text-red-700" onclick="deleteVsmGroup('${vsm.kode_produk}')">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
                   </div>
                   <div class="space-y-2">
                     ${vsm.processes.sort((a, b) => (a.order || 0) - (b.order || 0)).map((p, idx) => `
@@ -1159,6 +1177,118 @@
         `;
       }
     }
+    
+    let editVsmData = [];
+    
+    window.editVsmGroup = function(kodeProduk) {
+      const vsmItems = allData.vsm.filter(d => d.kode_produk === kodeProduk).sort((a, b) => (a.order || 0) - (b.order || 0));
+      
+      if (vsmItems.length === 0) return;
+      
+      editVsmData = JSON.parse(JSON.stringify(vsmItems));
+      
+      const firstItem = vsmItems[0];
+      document.getElementById('editVsmProdukInfo').textContent = `${firstItem.kode_produk} - ${firstItem.nama_produk} (${firstItem.area})`;
+      
+      renderEditVsmProcessList();
+      
+      document.getElementById('editVsmModal').classList.remove('hidden');
+      document.getElementById('editVsmModal').classList.add('flex');
+    };
+    
+    function renderEditVsmProcessList() {
+      const container = document.getElementById('editVsmProcessList');
+      container.innerHTML = '';
+      
+      editVsmData.forEach((process, idx) => {
+        const card = document.createElement('div');
+        card.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4';
+        card.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">PROSES ${idx + 1}</label>
+              <input type="text" value="${process.proses_name}" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white" readonly>
+            </div>
+            
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">MESIN</label>
+              <input type="text" value="${process.mesin}" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white" readonly>
+            </div>
+            
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">DURASI (MENIT) *</label>
+              <input type="number" value="${process.durasi}" data-idx="${idx}" data-field="durasi" class="edit-vsm-field w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" min="1">
+            </div>
+            
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">PERSONIL</label>
+              <input type="text" value="${process.personil}" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white" readonly>
+            </div>
+            
+            <div class="md:col-span-2">
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">PROBLEMS</label>
+              <textarea rows="2" data-idx="${idx}" data-field="problems" class="edit-vsm-field w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" style="text-transform: uppercase">${process.problems || ''}</textarea>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      
+      document.querySelectorAll('.edit-vsm-field').forEach(field => {
+        field.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.dataset.idx);
+          const fieldName = e.target.dataset.field;
+          
+          if (fieldName === 'durasi') {
+            editVsmData[idx][fieldName] = parseInt(e.target.value) || 0;
+          } else {
+            editVsmData[idx][fieldName] = e.target.value.trim();
+          }
+        });
+      });
+    }
+    
+    document.getElementById('cancelEditVsmBtn').addEventListener('click', () => {
+      document.getElementById('editVsmModal').classList.add('hidden');
+      document.getElementById('editVsmModal').classList.remove('flex');
+      editVsmData = [];
+    });
+    
+    document.getElementById('saveEditVsmBtn').addEventListener('click', async () => {
+      const saveBtn = document.getElementById('saveEditVsmBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>MENYIMPAN...';
+      
+      try {
+        for (const process of editVsmData) {
+          const { error } = await supabaseClient
+            .from('vsm')
+            .update({
+              durasi: process.durasi,
+              problems: process.problems,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', process.id);
+          
+          if (error) throw error;
+        }
+        
+        await logActivity('EDIT VSM', `Mengedit VSM untuk produk ${editVsmData[0].kode_produk} - ${editVsmData[0].nama_produk}`);
+        await reloadData();
+        
+        showToast('VSM BERHASIL DIUPDATE', 'success');
+        
+        document.getElementById('editVsmModal').classList.add('hidden');
+        document.getElementById('editVsmModal').classList.remove('flex');
+        editVsmData = [];
+      } catch (error) {
+        console.error('Error updating VSM:', error);
+        showToast('GAGAL MENGUPDATE VSM', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>SIMPAN PERUBAHAN';
+      }
+    });
     
     window.deleteVsmGroup = async function(kodeProduk) {
       const vsmItems = allData.vsm.filter(d => d.kode_produk === kodeProduk);
@@ -1546,5 +1676,5 @@
     setInterval(updateDateTime, 1000);
     initApp();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c037b66e1129c41',t:'MTc2ODc5NTgyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c03812933de9c41',t:'MTc2ODc5NjA1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
