@@ -1,1883 +1,1334 @@
 <!doctype html>
-<html lang="id" class="h-full">
+<html lang="en" class="h-full">
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Value Stream Mapping System</title>
-  <script src="/_sdk/element_sdk.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>BRFT MONITORING SYSTEM</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <style>
-    body {
-      box-sizing: border-box;
-    }
-    
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    * {
-      font-family: 'Inter', sans-serif;
-    }
-    
-    .dark {
-      color-scheme: dark;
-    }
-    
-    .process-card {
-      transition: all 0.3s ease;
-    }
-    
-    .process-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-    }
-    
-    .dark .process-card:hover {
-      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-    }
-    
+    body { box-sizing: border-box; }
+    * { font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }
     .toast {
-      animation: slideIn 0.3s ease-out;
+      position: fixed; top: 20px; right: 20px; padding: 16px 24px;
+      border-radius: 8px; z-index: 9999; animation: slideIn 0.3s ease;
     }
-    
     @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
-    
-    .modal-backdrop {
-      animation: fadeIn 0.2s ease-out;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    .vsm-flow {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      overflow-x: auto;
-      padding: 1rem 0;
-    }
-    
-    .vsm-arrow {
-      font-size: 1.5rem;
-      color: #3b82f6;
-    }
-    
-    .dark .vsm-arrow {
-      color: #60a5fa;
-    }
+    .tab-active { border-bottom: 3px solid #10b981; color: #10b981; }
+    .card-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2937; }
+    ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
   </style>
   <style>@view-transition { navigation: auto; }</style>
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
  </head>
- <body class="h-full w-full overflow-auto bg-gray-50 dark:bg-gray-900 transition-colors duration-200"><!-- Toast Container -->
-  <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div><!-- Main Container -->
-  <div class="w-full min-h-full flex flex-col"><!-- Header -->
-   <header class="bg-white dark:bg-gray-800 shadow-md transition-colors duration-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-     <div class="flex justify-between items-center">
-      <div>
-       <h1 class="text-2xl font-bold text-gray-900 dark:text-white" id="appTitle">Value Stream Mapping</h1>
-       <p class="text-sm text-gray-600 dark:text-gray-400" id="companyName">System Management</p>
-      </div>
-      <div class="flex items-center gap-4">
-       <div class="text-right">
-        <p class="text-sm font-medium text-gray-900 dark:text-white" id="currentTime"></p>
-        <p class="text-xs text-gray-600 dark:text-gray-400" id="currentDate"></p>
-       </div><button id="themeToggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"> <i class="fas fa-moon dark:hidden"></i> <i class="fas fa-sun hidden dark:inline"></i> </button>
-      </div>
+ <body class="h-full bg-gray-900 text-gray-100">
+  <div id="app" class="h-full w-full flex flex-col overflow-auto"><!-- Header -->
+   <header class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-4">
+     <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+     </div>
+     <div>
+      <h1 id="app-title" class="text-xl font-bold text-emerald-400">BRFT MONITORING SYSTEM</h1>
+      <p id="company-name" class="text-xs text-gray-400">PHARMA QUALITY CONTROL</p>
      </div>
     </div>
-   </header><!-- Navigation -->
-   <nav class="bg-blue-600 dark:bg-blue-800 shadow-lg transition-colors duration-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-     <div class="flex space-x-1 overflow-x-auto"><button class="nav-btn px-6 py-3 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-900 transition-colors whitespace-nowrap" data-page="dashboard"> <i class="fas fa-chart-line mr-2"></i>Dashboard </button> <button class="nav-btn px-6 py-3 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-900 transition-colors whitespace-nowrap" data-page="input"> <i class="fas fa-plus-circle mr-2"></i>Input VSM </button> <button class="nav-btn px-6 py-3 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-900 transition-colors whitespace-nowrap" data-page="management"> <i class="fas fa-cog mr-2"></i>VSM Management </button> <button class="nav-btn px-6 py-3 text-white font-medium hover:bg-blue-700 dark:hover:bg-blue-900 transition-colors whitespace-nowrap" data-page="history"> <i class="fas fa-history mr-2"></i>History </button>
-     </div>
+    <div class="flex items-center gap-4"><span id="current-date" class="text-sm text-gray-400"></span> <button id="theme-toggle" class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg></button>
+    </div>
+   </header><!-- Navigation Tabs -->
+   <nav class="bg-gray-800 border-b border-gray-700 px-6 flex-shrink-0">
+    <div class="flex gap-1 overflow-x-auto"><button class="tab-btn tab-active px-4 py-3 text-sm font-medium transition hover:text-emerald-400" data-tab="dashboard"> 📊 DASHBOARD </button> <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-400 transition hover:text-emerald-400" data-tab="input"> ➕ INPUT BRFT </button> <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-400 transition hover:text-emerald-400" data-tab="management"> ⚙️ MANAGEMENT </button> <button class="tab-btn px-4 py-3 text-sm font-medium text-gray-400 transition hover:text-emerald-400" data-tab="audit"> 📋 AUDIT TRAIL </button>
     </div>
    </nav><!-- Main Content -->
-   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"><!-- Dashboard Page -->
-    <div id="dashboardPage" class="page-content">
-     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard VSM</h2><!-- Visual Semua Produk -->
-      <div id="allProductsSection" class="mb-8">
-       <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"><i class="fas fa-list-ul mr-2 text-blue-600 dark:text-blue-400"></i> Semua Produk (Urut dari Durasi Terlama)</h3>
-       <div id="allProductsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"><!-- Products will be populated here -->
-       </div>
-      </div>
-      <div id="vsmDisplay" class="hidden mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-       <div class="bg-blue-50 dark:bg-gray-700 rounded-lg p-6 mb-6 transition-colors duration-200">
-        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2" id="vsmProdukTitle"></h3>
-        <p class="text-gray-600 dark:text-gray-400" id="vsmProdukCode"></p>
-        <div class="mt-4 pt-4 border-t border-blue-200 dark:border-gray-600">
-         <p class="text-sm text-gray-600 dark:text-gray-400">Total Durasi Proses</p>
-         <p class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="vsmTotalDurasi">0 menit</p>
+   <main class="flex-1 p-6 overflow-auto"><!-- Dashboard Tab -->
+    <div id="dashboard-tab" class="tab-content"><!-- Summary Cards -->
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-xs text-gray-400 mb-1">TOTAL TEMUAN</p>
+         <p id="total-findings" class="text-3xl font-bold text-white">0</p>
+        </div>
+        <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+         <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+         </svg>
         </div>
        </div>
-       <div class="mb-4">
-        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Value Stream Map</h4>
-        <div id="vsmFlowContainer" class="vsm-flow"></div>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-xs text-gray-400 mb-1">TARGET DOKUMEN</p>
+         <p id="target-docs" class="text-3xl font-bold text-blue-400">0</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+         <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+         </svg>
+        </div>
        </div>
-       <div id="processDetails" class="hidden mt-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-6 transition-colors duration-200">
-        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Detail Proses</h4>
-        <div id="processDetailsContent"></div>
-       </div><!-- Cara Membaca VSM -->
-       <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-lg p-6 mt-6 border-l-4 border-blue-600">
-        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center"><i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mr-2"></i> Cara Membaca VSM</h4>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <div class="flex items-center justify-between">
+        <div>
+         <p class="text-xs text-gray-400 mb-1">% BRFT BULAN INI</p>
+         <p id="brft-percentage" class="text-3xl font-bold">-</p>
+        </div>
+        <div id="brft-indicator" class="w-12 h-12 bg-gray-500/20 rounded-xl flex items-center justify-center">
+         <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+         </svg>
+        </div>
+       </div>
+      </div>
+     </div><!-- Filters -->
+     <div class="bg-gray-800 rounded-xl p-4 mb-6 card-shadow border border-gray-700">
+      <div class="flex flex-wrap gap-3 items-end">
+       <div class="flex-1 min-w-[150px]"><label class="block text-xs text-gray-400 mb-1">DARI TANGGAL</label> <input type="date" id="filter-date-from" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+       </div>
+       <div class="flex-1 min-w-[150px]"><label class="block text-xs text-gray-400 mb-1">SAMPAI TANGGAL</label> <input type="date" id="filter-date-to" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+       </div>
+       <div class="flex-1 min-w-[150px]"><label class="block text-xs text-gray-400 mb-1">AREA</label> <select id="filter-area" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <option value="">SEMUA AREA</option> </select>
+       </div>
+       <div class="flex-1 min-w-[150px]"><label class="block text-xs text-gray-400 mb-1">KODE PRODUK</label> <select id="filter-product" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <option value="">SEMUA PRODUK</option> </select>
+       </div>
+       <div class="flex-1 min-w-[150px]"><label class="block text-xs text-gray-400 mb-1">KATEGORI</label> <select id="filter-category" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <option value="">SEMUA KATEGORI</option> </select>
+       </div>
+       <div class="flex-1 min-w-[150px]"><label class="block text-xs text-gray-400 mb-1">INISIAL OPERATOR</label> <select id="filter-operator" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <option value="">SEMUA OPERATOR</option> </select>
+       </div><button id="apply-filter" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium transition"> ��� FILTER </button> <button id="reset-filter" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg text-sm font-medium transition"> ↺ RESET </button>
+      </div>
+     </div><!-- Charts Grid -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <h3 class="text-sm font-semibold text-gray-300 mb-4">���� TREND % BRFT PER BULAN</h3>
+       <div class="h-64">
+        <canvas id="chart-trend"></canvas>
+       </div>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <h3 class="text-sm font-semibold text-gray-300 mb-4">📊 TEMUAN PER BULAN</h3>
+       <div class="h-64">
+        <canvas id="chart-monthly"></canvas>
+       </div>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <h3 class="text-sm font-semibold text-gray-300 mb-4">�� TEMUAN PER AREA</h3>
+       <div class="h-64">
+        <canvas id="chart-area"></canvas>
+       </div>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <h3 class="text-sm font-semibold text-gray-300 mb-4">��� TEMUAN PER KODE PRODUK</h3>
+       <div class="h-64">
+        <canvas id="chart-product"></canvas>
+       </div>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <h3 class="text-sm font-semibold text-gray-300 mb-4">👤 TEMUAN PER OPERATOR</h3>
+       <div class="h-64">
+        <canvas id="chart-operator"></canvas>
+       </div>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+       <h3 class="text-sm font-semibold text-gray-300 mb-4">🏷️ TEMUAN PER KATEGORI</h3>
+       <div class="h-64">
+        <canvas id="chart-category"></canvas>
+       </div>
+      </div>
+     </div><!-- Data Table -->
+     <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+      <h3 class="text-sm font-semibold text-gray-300 mb-4">📋 DETAIL TEMUAN</h3>
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="border-b border-gray-700">
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">TANGGAL</th>
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">INISIAL</th>
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">AREA</th>
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">KATEGORI</th>
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">NO. BATCH</th>
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">TEMUAN PPI</th>
+         </tr>
+        </thead>
+        <tbody id="findings-table" class="divide-y divide-gray-700">
+         <tr>
+          <td colspan="6" class="py-8 text-center text-gray-500">TIDAK ADA DATA</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+    </div><!-- Input Tab -->
+    <div id="input-tab" class="tab-content hidden">
+     <div class="max-w-2xl mx-auto">
+      <div class="bg-gray-800 rounded-xl p-6 card-shadow border border-gray-700">
+       <h2 class="text-lg font-bold text-emerald-400 mb-6 flex items-center gap-2"><span>���</span> INPUT TEMUAN BRFT</h2>
+       <form id="finding-form" class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
-          <div class="flex items-start">
-           <div class="flex-shrink-0"><i class="fas fa-exclamation-triangle text-red-600 text-xl mr-3"></i>
-           </div>
-           <div>
-            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Icon Segitiga Merah</h5>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Menandai <strong>bottleneck</strong> (proses dengan durasi terlama)</p>
-           </div>
-          </div>
+         <div><label class="block text-xs text-gray-400 mb-1">TANGGAL TEMUAN *</label> <input type="date" id="input-date" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
          </div>
-         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
-          <div class="flex items-start">
-           <div class="flex-shrink-0"><span class="inline-block bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">30%</span>
-           </div>
-           <div>
-            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Badge Merah (≥30%)</h5>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Kontribusi waktu sangat tinggi, prioritas utama untuk improvement</p>
-           </div>
-          </div>
+         <div><label class="block text-xs text-gray-400 mb-1">AREA PRODUKSI *</label> <select id="input-area" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500"> <option value="">PILIH AREA</option> </select>
          </div>
-         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
-          <div class="flex items-start">
-           <div class="flex-shrink-0"><span class="inline-block bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">25%</span>
-           </div>
-           <div>
-            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Badge Orange (20-29%)</h5>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Kontribusi waktu tinggi, perlu perhatian khusus</p>
-           </div>
-          </div>
+         <div><label class="block text-xs text-gray-400 mb-1">KATEGORI TEMUAN *</label> <select id="input-category" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500"> <option value="">PILIH KATEGORI</option> </select>
          </div>
-         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
-          <div class="flex items-start">
-           <div class="flex-shrink-0"><span class="inline-block bg-yellow-500 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">18%</span>
-           </div>
-           <div>
-            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Badge Kuning (15-19%)</h5>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Kontribusi waktu sedang, monitoring rutin</p>
-           </div>
-          </div>
+         <div><label class="block text-xs text-gray-400 mb-1">KODE PRODUK *</label> <select id="input-product" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500"> <option value="">PILIH PRODUK</option> </select>
          </div>
-         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
-          <div class="flex items-start">
-           <div class="flex-shrink-0"><span class="inline-block bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full mr-3">10%</span>
-           </div>
-           <div>
-            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Badge Hijau (&lt;15%)</h5>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Kontribusi waktu rendah, sudah efisien</p>
-           </div>
-          </div>
+         <div><label class="block text-xs text-gray-400 mb-1">NOMOR BATCH *</label> <input type="text" id="input-batch" required placeholder="MASUKKAN NO. BATCH" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 placeholder-gray-500">
          </div>
-         <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
-          <div class="flex items-start">
-           <div class="flex-shrink-0"><i class="fas fa-arrow-right text-blue-600 text-xl mr-3"></i>
-           </div>
-           <div>
-            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">Alur Proses</h5>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Panah menunjukkan urutan flow dari proses awal hingga akhir</p>
-           </div>
-          </div>
+         <div><label class="block text-xs text-gray-400 mb-1">INISIAL OPERATOR *</label> <select id="input-operator" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500"> <option value="">PILIH OPERATOR</option> </select>
          </div>
         </div>
-        <div class="mt-4 bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500 p-4 rounded">
-         <p class="text-sm text-yellow-800 dark:text-yellow-200"><i class="fas fa-lightbulb mr-2"></i> <strong>Tips:</strong> Fokuskan improvement pada proses dengan badge merah/orange dan yang memiliki icon segitiga merah (bottleneck) untuk hasil maksimal dalam mengurangi lead time!</p>
+        <div><label class="block text-xs text-gray-400 mb-1">DESKRIPSI TEMUAN PPI *</label> <textarea id="input-description" required rows="4" placeholder="JELASKAN TEMUAN SECARA DETAIL..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 placeholder-gray-500 resize-none"></textarea>
+        </div>
+        <div class="flex gap-3 pt-2"><button type="submit" id="submit-finding" class="flex-1 bg-emerald-600 hover:bg-emerald-700 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2"> <span>💾</span> SIMPAN TEMUAN </button> <button type="reset" class="px-6 bg-gray-600 hover:bg-gray-500 py-3 rounded-lg font-medium transition"> ↺ RESET </button>
+        </div>
+       </form>
+      </div>
+     </div>
+    </div><!-- Management Tab -->
+    <div id="management-tab" class="tab-content hidden"><!-- Login Panel -->
+     <div id="admin-login" class="max-w-md mx-auto">
+      <div class="bg-gray-800 rounded-xl p-6 card-shadow border border-gray-700">
+       <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-emerald-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+         <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+         </svg>
+        </div>
+        <h2 class="text-lg font-bold text-white">ADMIN LOGIN</h2>
+        <p class="text-xs text-gray-400 mt-1">MASUKKAN PASSWORD UNTUK AKSES MANAJEMEN</p>
+       </div>
+       <div class="space-y-4">
+        <div><label class="block text-xs text-gray-400 mb-1">PASSWORD</label> <input type="password" id="admin-password" placeholder="••••••••" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500 placeholder-gray-500">
+        </div><button id="admin-login-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-lg font-medium transition"> 🔓 LOGIN </button>
+       </div>
+      </div>
+     </div><!-- Admin Panel -->
+     <div id="admin-panel" class="hidden">
+      <div class="flex justify-between items-center mb-6">
+       <h2 class="text-lg font-bold text-emerald-400">⚙️ BRFT MANAGEMENT</h2><button id="admin-logout" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"> 🚪 LOGOUT </button>
+      </div><!-- Sub-tabs -->
+      <div class="bg-gray-800 rounded-t-xl border border-gray-700 border-b-0">
+       <div class="flex overflow-x-auto"><button class="mgmt-tab mgmt-tab-active px-4 py-3 text-sm font-medium border-b-2 border-emerald-500 text-emerald-400" data-mgmt="operators">👤 OPERATOR</button> <button class="mgmt-tab px-4 py-3 text-sm font-medium text-gray-400 hover:text-emerald-400" data-mgmt="products">📦 KODE PRODUK</button> <button class="mgmt-tab px-4 py-3 text-sm font-medium text-gray-400 hover:text-emerald-400" data-mgmt="areas">🏭 AREA</button> <button class="mgmt-tab px-4 py-3 text-sm font-medium text-gray-400 hover:text-emerald-400" data-mgmt="categories">🏷��� KATEGORI</button> <button class="mgmt-tab px-4 py-3 text-sm font-medium text-gray-400 hover:text-emerald-400" data-mgmt="targets">🎯 TARGET</button> <button class="mgmt-tab px-4 py-3 text-sm font-medium text-gray-400 hover:text-emerald-400" data-mgmt="findings">📋 TEMUAN</button>
+       </div>
+      </div>
+      <div class="bg-gray-800 rounded-b-xl p-5 border border-gray-700 border-t-0"><!-- Operators Management -->
+       <div id="mgmt-operators" class="mgmt-content">
+        <div class="flex gap-3 mb-4"><input type="text" id="new-operator" placeholder="INISIAL OPERATOR BARU" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 placeholder-gray-500"> <button id="add-operator" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium transition">➕ TAMBAH</button>
+        </div>
+        <div id="operators-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+       </div><!-- Products Management -->
+       <div id="mgmt-products" class="mgmt-content hidden">
+        <div class="flex gap-3 mb-4"><input type="text" id="new-product" placeholder="KODE PRODUK BARU" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 placeholder-gray-500"> <button id="add-product" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium transition">➕ TAMBAH</button>
+        </div>
+        <div id="products-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+       </div><!-- Areas Management -->
+       <div id="mgmt-areas" class="mgmt-content hidden">
+        <div class="flex gap-3 mb-4"><input type="text" id="new-area" placeholder="NAMA AREA BARU" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 placeholder-gray-500"> <button id="add-area" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium transition">➕ TAMBAH</button>
+        </div>
+        <div id="areas-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+       </div><!-- Categories Management -->
+       <div id="mgmt-categories" class="mgmt-content hidden">
+        <div class="flex gap-3 mb-4"><input type="text" id="new-category" placeholder="NAMA KATEGORI BARU" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 placeholder-gray-500"> <button id="add-category" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium transition">➕ TAMBAH</button>
+        </div>
+        <div id="categories-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+       </div><!-- Targets Management -->
+       <div id="mgmt-targets" class="mgmt-content hidden">
+        <div class="flex gap-3 mb-4"><input type="month" id="new-target-month" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <input type="number" id="new-target-value" placeholder="TARGET DOKUMEN" min="1" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 placeholder-gray-500"> <button id="add-target" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium transition">➕ TAMBAH</button>
+        </div>
+        <div id="targets-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+       </div><!-- Findings Management -->
+       <div id="mgmt-findings" class="mgmt-content hidden">
+        <div class="overflow-x-auto max-h-96">
+         <table class="w-full text-sm">
+          <thead class="sticky top-0 bg-gray-800">
+           <tr class="border-b border-gray-700">
+            <th class="text-left py-2 px-2 text-gray-400 font-medium">TANGGAL</th>
+            <th class="text-left py-2 px-2 text-gray-400 font-medium">AREA</th>
+            <th class="text-left py-2 px-2 text-gray-400 font-medium">BATCH</th>
+            <th class="text-left py-2 px-2 text-gray-400 font-medium">AKSI</th>
+           </tr>
+          </thead>
+          <tbody id="findings-mgmt-list" class="divide-y divide-gray-700"></tbody>
+         </table>
         </div>
        </div>
       </div>
      </div>
-    </div><!-- Input VSM Page -->
-    <div id="inputPage" class="page-content hidden">
-     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Input VSM</h2>
-      <div id="inputLoginForm" class="max-w-md mx-auto">
-       <div class="bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 p-4 mb-6">
-        <p class="text-sm text-yellow-800 dark:text-yellow-200"><i class="fas fa-lock mr-2"></i>Login management diperlukan untuk mengakses halaman ini</p>
-       </div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password Management</label> <input type="password" id="inputPassword" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Masukkan password"> <button id="inputLoginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Login </button>
-      </div>
-      <div id="inputVsmForm" class="hidden">
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">AREA <span class="text-red-500">*</span></label> <select id="inputArea" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">-- PILIH AREA --</option> <option value="INJEKSI">INJEKSI</option> <option value="NON INJEKSI">NON INJEKSI</option> </select>
-        </div>
-        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PRODUK <span class="text-red-500">*</span></label> <select id="inputProdukDropdown" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" disabled> <option value="">-- PILIH AREA DULU --</option> </select>
-        </div>
+    </div><!-- Audit Trail Tab -->
+    <div id="audit-tab" class="tab-content hidden">
+     <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700 mb-6">
+      <div class="flex flex-wrap gap-3 items-end">
+       <div class="flex-1 min-w-[150px]"><label class="block text-xs text-gray-400 mb-1">DARI TANGGAL</label> <input type="date" id="audit-date-from" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
        </div>
-       <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">PROSES</h3>
-        <div id="processList" class="space-y-4 mb-6"></div>
-        <div class="flex gap-2"><button id="addProcessBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"> <i class="fas fa-plus mr-2"></i>ADD PROSES </button> <button id="submitVsmBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors" disabled> <i class="fas fa-check mr-2"></i>SUBMIT VSM </button>
-        </div>
+       <div class="flex-1 min-w-[150px]"><label class="block text-xs text-gray-400 mb-1">SAMPAI TANGGAL</label> <input type="date" id="audit-date-to" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500">
        </div>
+       <div class="flex-1 min-w-[120px]"><label class="block text-xs text-gray-400 mb-1">AREA</label> <select id="audit-filter-area" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <option value="">SEMUA</option> </select>
+       </div>
+       <div class="flex-1 min-w-[120px]"><label class="block text-xs text-gray-400 mb-1">PRODUK</label> <select id="audit-filter-product" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <option value="">SEMUA</option> </select>
+       </div>
+       <div class="flex-1 min-w-[120px]"><label class="block text-xs text-gray-400 mb-1">KATEGORI</label> <select id="audit-filter-category" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <option value="">SEMUA</option> </select>
+       </div>
+       <div class="flex-1 min-w-[120px]"><label class="block text-xs text-gray-400 mb-1">INISIAL</label> <select id="audit-filter-initial" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"> <option value="">SEMUA</option> </select>
+       </div><button id="audit-filter-btn" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg text-sm font-medium transition">🔍 FILTER</button> <button id="audit-reset-btn" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded-lg text-sm font-medium transition">↺ RESET</button> <button id="export-pdf" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium transition">📄 EXPORT PDF</button>
       </div>
      </div>
-    </div><!-- VSM Management Page -->
-    <div id="managementPage" class="page-content hidden">
-     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">VSM Management</h2>
-      <div id="managementLoginForm" class="max-w-md mx-auto">
-       <div class="bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 p-4 mb-6">
-        <p class="text-sm text-yellow-800 dark:text-yellow-200"><i class="fas fa-lock mr-2"></i>Login management diperlukan untuk mengakses halaman ini</p>
-       </div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password Management</label> <input type="password" id="managementPassword" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Masukkan password"> <button id="managementLoginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Login </button>
-      </div>
-      <div id="managementContent" class="hidden">
-       <div class="mb-6">
-        <div class="border-b border-gray-200 dark:border-gray-700">
-         <nav class="flex space-x-1 overflow-x-auto"><button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="proses"> Proses </button> <button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="mesin"> Mesin </button> <button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="personil"> Personil </button> <button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="produk"> Produk </button> <button class="mgmt-tab px-6 py-3 text-gray-700 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 border-b-2 border-transparent whitespace-nowrap" data-tab="vsm"> List VSM </button>
-         </nav>
-        </div>
-       </div>
-       <div id="mgmtTabContent"></div>
-      </div>
-     </div>
-    </div><!-- History Page -->
-    <div id="historyPage" class="page-content hidden">
-     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-200">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">History</h2>
-      <div id="historyLoginForm" class="max-w-md mx-auto">
-       <div class="bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 p-4 mb-6">
-        <p class="text-sm text-yellow-800 dark:text-yellow-200"><i class="fas fa-lock mr-2"></i>Login management diperlukan untuk mengakses halaman ini</p>
-       </div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password Management</label> <input type="password" id="historyPassword" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Masukkan password"> <button id="historyLoginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Login </button>
-      </div>
-      <div id="historyContent" class="hidden">
-       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tanggal Dari</label> <input type="date" id="historyDateFrom" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tanggal Sampai</label> <input type="date" id="historyDateTo" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Kode Produk</label> <select id="historyKodeProduk" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">Semua produk</option> </select>
-        </div>
-        <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Personil</label> <select id="historyPersonil" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">Semua personil</option> </select>
-        </div>
-       </div>
-       <div class="flex gap-2 mb-6"><button id="historyFilterBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"> <i class="fas fa-filter mr-2"></i>Filter </button> <button id="historyResetBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg transition-colors"> <i class="fas fa-redo mr-2"></i>Reset </button> <button id="historyDownloadBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors ml-auto"> <i class="fas fa-download mr-2"></i>Download PDF </button>
-       </div>
-       <div id="historyTableContainer" class="overflow-x-auto">
-        <table class="w-full">
-         <thead class="bg-gray-100 dark:bg-gray-700">
-          <tr>
-           <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Tanggal &amp; Waktu</th>
-           <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Tipe Aktivitas</th>
-           <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Deskripsi</th>
-           <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">User</th>
-          </tr>
-         </thead>
-         <tbody id="historyTableBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-        </table>
-       </div>
-       <div id="noHistoryMessage" class="text-center py-12 text-gray-500 dark:text-gray-400 hidden"><i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
-        <p>Belum ada history data</p>
-       </div>
+     <div class="bg-gray-800 rounded-xl p-5 card-shadow border border-gray-700">
+      <h3 class="text-sm font-semibold text-gray-300 mb-4">📋 AUDIT TRAIL LOG</h3>
+      <div class="overflow-x-auto max-h-96">
+       <table class="w-full text-sm">
+        <thead class="sticky top-0 bg-gray-800">
+         <tr class="border-b border-gray-700">
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">TIMESTAMP</th>
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">AKSI</th>
+          <th class="text-left py-3 px-3 text-gray-400 font-medium">DETAIL</th>
+         </tr>
+        </thead>
+        <tbody id="audit-table" class="divide-y divide-gray-700">
+         <tr>
+          <td colspan="3" class="py-8 text-center text-gray-500">TIDAK ADA LOG</td>
+         </tr>
+        </tbody>
+       </table>
       </div>
      </div>
     </div>
    </main>
-  </div><!-- Process Modal -->
-  <div id="processModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden items-center justify-center z-40 p-4">
-   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-    <div class="p-6">
-     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">ADD PROSES</h3>
-     <div class="space-y-4">
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">NAMA PROSES <span class="text-red-500">*</span></label> <select id="modalProsesName" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">-- PILIH PROSES --</option> </select>
-      </div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">NAMA MESIN <span class="text-red-500">*</span></label> <select id="modalMesin" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"> <option value="">-- PILIH MESIN --</option> </select>
-      </div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ESTIMASI DURASI PER BATCH (MENIT) <span class="text-red-500">*</span></label> <input type="number" id="modalDurasi" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="CONTOH: 30" min="1">
-      </div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PERSONIL BERKOMPETEN <span class="text-red-500">*</span></label>
-       <div id="modalPersonilCheckboxes" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-48 overflow-y-auto space-y-2"><!-- Checkboxes will be populated here -->
-       </div>
-      </div>
-      <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PROBLEMS</label> <textarea id="modalProblems" rows="3" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="TAMBAHKAN PROBLEM JIKA ADA" style="text-transform: uppercase"></textarea>
-      </div>
-     </div>
-     <div class="flex gap-2 mt-6"><button id="saveProcessBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-save mr-2"></i>SAVE PROSES </button> <button id="cancelProcessBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-times mr-2"></i>CANCEL </button>
-     </div>
+  </div><!-- Toast Container -->
+  <div id="toast-container"></div><!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+   <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
+    <h3 class="text-lg font-bold text-white mb-2">⚠️ KONFIRMASI HAPUS</h3>
+    <p id="delete-message" class="text-gray-400 mb-6">APAKAH ANDA YAKIN INGIN MENGHAPUS DATA INI?</p>
+    <div class="flex gap-3"><button id="confirm-delete" class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg font-medium transition">🗑️ HAPUS</button> <button id="cancel-delete" class="flex-1 bg-gray-600 hover:bg-gray-500 py-2 rounded-lg font-medium transition">❌ BATAL</button>
     </div>
    </div>
-  </div><!-- PDF Password Modal -->
-  <div id="pdfPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden items-center justify-center z-40 p-4">
-   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Verifikasi Admin</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Masukkan password admin untuk download PDF</p><input type="password" id="pdfPasswordInput" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Password">
-    <div class="flex gap-2"><button id="confirmPdfDownloadBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Download </button> <button id="cancelPdfDownloadBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"> Cancel </button>
+  </div><!-- Edit Modal -->
+  <div id="edit-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+   <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 border border-gray-700">
+    <h3 class="text-lg font-bold text-white mb-4">✏️ EDIT DATA</h3>
+    <div class="mb-4"><label class="block text-xs text-gray-400 mb-1">NILAI BARU</label> <input type="text" id="edit-value" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-emerald-500">
     </div>
-   </div>
-  </div><!-- Edit VSM Modal -->
-  <div id="editVsmModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden items-center justify-center z-40 p-4">
-   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-    <div class="p-6">
-     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">EDIT VSM</h3>
-     <div class="mb-4">
-      <p class="text-sm text-gray-600 dark:text-gray-400">Produk: <span id="editVsmProdukInfo" class="font-semibold text-gray-900 dark:text-white"></span></p>
-     </div>
-     <div id="editVsmProcessList" class="space-y-4 mb-6"></div>
-     <div class="mb-4"><button id="addEditProcessBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"> <i class="fas fa-plus mr-2"></i>TAMBAH PROSES BARU </button>
-     </div>
-     <div class="flex gap-2"><button id="saveEditVsmBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-save mr-2"></i>SIMPAN PERUBAHAN </button> <button id="cancelEditVsmBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"> <i class="fas fa-times mr-2"></i>BATAL </button>
-     </div>
+    <div class="flex gap-3"><button id="confirm-edit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 py-2 rounded-lg font-medium transition">💾 SIMPAN</button> <button id="cancel-edit" class="flex-1 bg-gray-600 hover:bg-gray-500 py-2 rounded-lg font-medium transition">❌ BATAL</button>
     </div>
    </div>
   </div>
   <script>
     // Supabase Configuration
-    const SUPABASE_URL = 'https://sezgqdusjqsdoxmubzsm.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlemdxZHVzanFzZG94bXVienNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg3ODA0MTMsImV4cCI6MjA4NDM1NjQxM30.GFAdhXdoMtJOmlgjC-qwzuiJ8I6AMym6pwTsfQmGqbg';
-    let supabaseClient;
-    
-    // Initialize Supabase hanya sekali
-    if (!window.vsmSupabase) {
-      window.vsmSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-    supabaseClient = window.vsmSupabase;
-    
+    const SUPABASE_URL = 'https://aetnuvotehpbfykakuni.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFldG51dm90ZWhwYmZ5a2FrdW5pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNTU0OTgsImV4cCI6MjA4NDYzMTQ5OH0.VurModFLejJ-f68RqwpydgrrvCJ84zoNftugg-8SS9k';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Default Config
     const defaultConfig = {
-      app_title: "Value Stream Mapping",
-      company_name: "System Management",
-      primary_color: "#2563eb"
+      app_title: 'BRFT MONITORING SYSTEM',
+      company_name: 'PHARMA QUALITY CONTROL',
+      primary_color: '#10b981',
+      background_color: '#111827',
+      surface_color: '#1f2937',
+      text_color: '#f3f4f6',
+      accent_color: '#059669'
     };
-    
-    let allData = {
-      master_proses: [],
-      master_mesin: [],
-      master_personil: [],
-      master_produk: [],
-      vsm: [],
-      activity_log: []
-    };
-    let currentPage = 'dashboard';
-    let tempProcesses = [];
-    let isInputLoggedIn = false;
-    let isManagementLoggedIn = false;
-    let isHistoryLoggedIn = false;
-    const ADMIN_PASSWORD = 'admin123';
-    
-    // Load all data from Supabase
+
+    // Application State
+    let findings = [];
+    let operators = [];
+    let products = [];
+    let areas = [];
+    let categories = [];
+    let targets = [];
+    let auditLogs = [];
+    let isAdminLoggedIn = false;
+    let deleteCallback = null;
+    let editCallback = null;
+    let charts = {};
+
+    // Supabase Real-time Subscriptions
+    let subscriptions = [];
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+          document.getElementById('company-name').textContent = config.company_name || defaultConfig.company_name;
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (v) => { config.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); }
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ['app_title', config.app_title || defaultConfig.app_title],
+          ['company_name', config.company_name || defaultConfig.company_name]
+        ])
+      });
+    }
+
+    // Supabase Data Loading Functions
     async function loadAllData() {
       try {
-        const tables = ['master_proses', 'master_mesin', 'master_personil', 'master_produk', 'vsm', 'activity_log'];
-        
-        for (const table of tables) {
-          const { data, error } = await supabaseClient
-            .from(table)
-            .select('*')
-            .order('created_at', { ascending: false });
-          
-          if (error) throw error;
-          allData[table] = data || [];
-        }
-        
-        updateUI();
+        // Load all master data in parallel
+        const [operatorsRes, productsRes, areasRes, categoriesRes, targetsRes, findingsRes, auditRes] = await Promise.all([
+          supabaseClient.from('operators').select('*').order('name'),
+          supabaseClient.from('products').select('*').order('name'),
+          supabaseClient.from('areas').select('*').order('name'),
+          supabaseClient.from('categories').select('*').order('name'),
+          supabaseClient.from('targets').select('*').order('target_month', { ascending: false }),
+          supabaseClient.from('findings_detailed').select('*').order('date', { ascending: false }),
+          supabaseClient.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(500)
+        ]);
+
+        if (operatorsRes.error) throw operatorsRes.error;
+        if (productsRes.error) throw productsRes.error;
+        if (areasRes.error) throw areasRes.error;
+        if (categoriesRes.error) throw categoriesRes.error;
+        if (targetsRes.error) throw targetsRes.error;
+        if (findingsRes.error) throw findingsRes.error;
+        if (auditRes.error) throw auditRes.error;
+
+        operators = operatorsRes.data || [];
+        products = productsRes.data || [];
+        areas = areasRes.data || [];
+        categories = categoriesRes.data || [];
+        targets = targetsRes.data || [];
+        findings = findingsRes.data || [];
+        auditLogs = auditRes.data || [];
+
+        updateDropdowns();
+        updateDashboard();
+        updateManagementLists();
+        updateAuditTable();
       } catch (error) {
         console.error('Error loading data:', error);
-        showToast('Gagal memuat data', 'error');
+        showToast('GAGAL MEMUAT DATA', 'error');
       }
     }
-    
-    // Reload data after changes
-    async function reloadData() {
-      await loadAllData();
-    }
-    
-    // Initialize app
-    async function initApp() {
-      await loadAllData();
-      
-      // Setup realtime subscriptions for all tables
-      const tables = ['master_proses', 'master_mesin', 'master_personil', 'master_produk', 'vsm', 'activity_log'];
+
+    // Setup Real-time Subscriptions
+    function setupRealtimeSubscriptions() {
+      // Subscribe to all tables with proper handlers
+      const tables = ['operators', 'products', 'areas', 'categories', 'targets', 'findings', 'audit_logs'];
       
       tables.forEach(table => {
-        supabaseClient
+        const subscription = supabaseClient
           .channel(`${table}_changes`)
-          .on('postgres_changes', 
-            { event: '*', schema: 'public', table: table },
-            () => {
-              loadAllData();
-            }
-          )
-          .subscribe();
+          .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: table 
+          }, (payload) => {
+            console.log(`Real-time update detected on ${table}:`, payload);
+            loadAllData();
+          })
+          .subscribe((status) => {
+            console.log(`Subscription status for ${table}:`, status);
+          });
+        
+        subscriptions.push(subscription);
       });
-      
-      if (window.elementSdk) {
-        await window.elementSdk.init({
-          defaultConfig,
-          onConfigChange: async (config) => {
-            document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
-            document.getElementById('companyName').textContent = config.company_name || defaultConfig.company_name;
-          },
-          mapToCapabilities: (config) => ({
-            recolorables: [],
-            borderables: [],
-            fontEditable: undefined,
-            fontSizeable: undefined
-          }),
-          mapToEditPanelValues: (config) => new Map([
-            ["app_title", config.app_title || defaultConfig.app_title],
-            ["company_name", config.company_name || defaultConfig.company_name]
-          ])
-        });
-      }
     }
-    
-    function updateUI() {
-      if (currentPage === 'dashboard') {
-        updateDashboard();
-        renderAllProducts();
-      } else if (currentPage === 'history') {
-        filterHistory();
-      } else if (currentPage === 'management' && isManagementLoggedIn) {
-        updateManagementContent();
-      }
-    }
-    
-    async function logActivity(activityType, description) {
-      try {
-        const activity = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          activity_type: activityType,
-          description: description,
-          user: 'admin',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        const { error } = await supabaseClient
-          .from('activity_log')
-          .insert([activity]);
-        
-        if (error) throw error;
-      } catch (error) {
-        console.error('Error logging activity:', error);
-      }
-    }
-    
-    function showToast(message, type = 'info') {
+
+    // Toast Notification
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
-      toast.className = `toast px-6 py-3 rounded-lg shadow-lg text-white ${
-        type === 'success' ? 'bg-green-600' : 
-        type === 'error' ? 'bg-red-600' : 
-        'bg-blue-600'
-      }`;
+      toast.className = `toast ${type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600'} text-white`;
       toast.textContent = message;
-      
-      document.getElementById('toastContainer').appendChild(toast);
-      
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
     }
-    
-    function updateDateTime() {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      
-      document.getElementById('currentTime').textContent = timeStr;
-      document.getElementById('currentDate').textContent = dateStr;
-    }
-    
-    // Theme Toggle
-    function toggleTheme() {
-      document.documentElement.classList.toggle('dark');
-      const isDark = document.documentElement.classList.contains('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    }
-    
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-    
-    // Load saved theme
-    if (localStorage.getItem('theme') === 'dark') {
-      document.documentElement.classList.add('dark');
-    }
-    
-    // Navigation
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const page = btn.dataset.page;
-        
-        if (page === 'input' || page === 'management' || page === 'history') {
-          if (page === 'input') {
-            isInputLoggedIn = false;
-          } else if (page === 'management') {
-            isManagementLoggedIn = false;
-          } else if (page === 'history') {
-            isHistoryLoggedIn = false;
-          }
-        }
-        
-        if ((page === 'input' || page === 'management' || page === 'history') && 
-            ((page === 'input' && !isInputLoggedIn) || 
-             (page === 'management' && !isManagementLoggedIn) || 
-             (page === 'history' && !isHistoryLoggedIn))) {
-          currentPage = page;
-          
-          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-blue-700', 'dark:bg-blue-900'));
-          btn.classList.add('bg-blue-700', 'dark:bg-blue-900');
-          
-          document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
-          document.getElementById(page + 'Page').classList.remove('hidden');
-          
-          if (page === 'input') {
-            document.getElementById('inputLoginForm').classList.remove('hidden');
-            document.getElementById('inputVsmForm').classList.add('hidden');
-            document.getElementById('inputPassword').value = '';
-          } else if (page === 'management') {
-            document.getElementById('managementLoginForm').classList.remove('hidden');
-            document.getElementById('managementContent').classList.add('hidden');
-            document.getElementById('managementPassword').value = '';
-          } else if (page === 'history') {
-            document.getElementById('historyLoginForm').classList.remove('hidden');
-            document.getElementById('historyContent').classList.add('hidden');
-            document.getElementById('historyPassword').value = '';
-          }
-          return;
-        }
-        
-        currentPage = page;
-        
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-blue-700', 'dark:bg-blue-900'));
-        btn.classList.add('bg-blue-700', 'dark:bg-blue-900');
-        
-        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
-        document.getElementById(page + 'Page').classList.remove('hidden');
-        
-        if (page === 'dashboard') {
-          document.getElementById('vsmDisplay').classList.add('hidden');
-          renderAllProducts();
-        }
-        
-        if (page === 'history' && isHistoryLoggedIn) {
-          filterHistory();
-        }
-      });
-    });
-    
-    document.querySelector('.nav-btn').classList.add('bg-blue-700', 'dark:bg-blue-900');
-    
-    // Dashboard functionality
-    function displayVSM(kodeProduk) {
-      const vsmData = allData.vsm.filter(d => d.kode_produk === kodeProduk).sort((a, b) => (a.order || 0) - (b.order || 0));
-      
-      if (vsmData.length === 0) {
-        document.getElementById('vsmDisplay').classList.add('hidden');
-        return;
-      }
-      
-      const firstItem = vsmData[0];
-      document.getElementById('vsmProdukTitle').textContent = firstItem.nama_produk;
-      document.getElementById('vsmProdukCode').textContent = `Kode: ${firstItem.kode_produk} | Area: ${firstItem.area}`;
-      
-      const totalDurasi = vsmData.reduce((sum, process) => sum + (process.durasi || 0), 0);
-      const totalHari = (totalDurasi / (60 * 24)).toFixed(2);
-      document.getElementById('vsmTotalDurasi').textContent = `${totalDurasi} menit (${totalHari} hari)`;
-      
-      const maxDurasi = Math.max(...vsmData.map(p => p.durasi));
-      
-      const flowContainer = document.getElementById('vsmFlowContainer');
-      flowContainer.innerHTML = '';
-      
-      vsmData.forEach((process, idx) => {
-        const percentage = ((process.durasi / totalDurasi) * 100).toFixed(1);
-        const isBottleneck = process.durasi === maxDurasi;
-        
-        let badgeColor = 'bg-green-500';
-        
-        if (percentage >= 30) {
-          badgeColor = 'bg-red-500';
-        } else if (percentage >= 20) {
-          badgeColor = 'bg-orange-500';
-        } else if (percentage >= 15) {
-          badgeColor = 'bg-yellow-500';
-        }
-        
-        const card = document.createElement('div');
-        card.className = `process-card bg-white dark:bg-gray-700 rounded-lg shadow p-4 cursor-pointer min-w-[220px] relative`;
-        card.innerHTML = `
-          ${isBottleneck ? '<div class="absolute top-2 right-2"><i class="fas fa-exclamation-triangle text-red-600 text-lg"></i></div>' : ''}
-          <div class="text-center">
-            <div class="bg-blue-100 dark:bg-blue-900 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-2">
-              <span class="text-blue-600 dark:text-blue-300 font-bold">${idx + 1}</span>
-            </div>
-            <h5 class="font-semibold text-gray-900 dark:text-white mb-1">${process.proses_name}</h5>
-            <p class="text-sm text-gray-600 dark:text-gray-400">${process.durasi} menit</p>
-            <div class="mt-3">
-              <div class="${badgeColor} text-white text-sm font-bold px-3 py-1 rounded-full inline-block">
-                ${percentage}%
-              </div>
-            </div>
-          </div>
-        `;
-        
-        card.addEventListener('click', () => showProcessDetail(process));
-        flowContainer.appendChild(card);
-        
-        if (idx < vsmData.length - 1) {
-          const arrow = document.createElement('div');
-          arrow.className = 'vsm-arrow';
-          arrow.innerHTML = '<i class="fas fa-arrow-right"></i>';
-          flowContainer.appendChild(arrow);
-        }
-      });
-      
-      document.getElementById('vsmDisplay').classList.remove('hidden');
-      document.getElementById('processDetails').classList.add('hidden');
-      
-      // Scroll smooth ke detail VSM
-      document.getElementById('vsmDisplay').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    
-    function showProcessDetail(process) {
-      const detailContent = document.getElementById('processDetailsContent');
-      detailContent.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Nama Proses</p>
-            <p class="font-semibold text-gray-900 dark:text-white">${process.proses_name}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Mesin</p>
-            <p class="font-semibold text-gray-900 dark:text-white">${process.mesin}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Durasi</p>
-            <p class="font-semibold text-gray-900 dark:text-white">${process.durasi} menit</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Personil</p>
-            <p class="font-semibold text-gray-900 dark:text-white">${process.personil}</p>
-          </div>
-          ${process.problems ? `
-          <div class="md:col-span-2">
-            <p class="text-sm text-gray-600 dark:text-gray-400">Problems</p>
-            <p class="font-semibold text-gray-900 dark:text-white">${process.problems}</p>
-          </div>
-          ` : ''}
-        </div>
-      `;
-      
-      document.getElementById('processDetails').classList.remove('hidden');
-    }
-    
-    function updateDashboard() {
-      renderAllProducts();
-    }
-    
-    function renderAllProducts() {
-      const vsmData = allData.vsm;
-      const container = document.getElementById('allProductsList');
-      
-      if (vsmData.length === 0) {
-        container.innerHTML = `
-          <div class="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
-            <i class="fas fa-inbox text-4xl mb-2 opacity-50"></i>
-            <p>Belum ada produk yang diinput</p>
-          </div>
-        `;
-        return;
-      }
-      
-      // Group by product
-      const groupedProducts = {};
-      vsmData.forEach(item => {
-        const key = item.kode_produk;
-        if (!groupedProducts[key]) {
-          groupedProducts[key] = {
-            kode_produk: item.kode_produk,
-            nama_produk: item.nama_produk,
-            area: item.area,
-            total_durasi: 0,
-            jumlah_proses: 0
-          };
-        }
-        groupedProducts[key].total_durasi += item.durasi || 0;
-        groupedProducts[key].jumlah_proses++;
-      });
-      
-      // Sort by total_durasi descending
-      const sortedProducts = Object.values(groupedProducts).sort((a, b) => b.total_durasi - a.total_durasi);
-      
-      container.innerHTML = sortedProducts.map((product, idx) => {
-        const totalHari = (product.total_durasi / (60 * 24)).toFixed(2);
-        
-        // Color coding based on ranking
-        let badgeColor = 'bg-green-500';
-        let rankIcon = 'fas fa-check-circle';
-        
-        if (idx === 0) {
-          badgeColor = 'bg-red-500';
-          rankIcon = 'fas fa-exclamation-circle';
-        } else if (idx === 1) {
-          badgeColor = 'bg-orange-500';
-          rankIcon = 'fas fa-exclamation-triangle';
-        } else if (idx === 2) {
-          badgeColor = 'bg-yellow-500';
-          rankIcon = 'fas fa-info-circle';
-        }
-        
-        return `
-          <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg p-4 border-l-4 ${idx < 3 ? 'border-' + (idx === 0 ? 'red' : idx === 1 ? 'orange' : 'yellow') + '-500' : 'border-blue-500'} hover:shadow-lg transition-all cursor-pointer" onclick="quickViewProduct('${product.kode_produk}')">
-            <div class="flex items-start justify-between mb-2">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="${badgeColor} text-white text-xs font-bold px-2 py-1 rounded">
-                    #${idx + 1}
-                  </span>
-                  <span class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded font-medium">
-                    ${product.area}
-                  </span>
-                </div>
-                <h4 class="font-bold text-gray-900 dark:text-white text-sm mb-1">${product.nama_produk}</h4>
-                <p class="text-xs text-gray-600 dark:text-gray-400">${product.kode_produk}</p>
-              </div>
-              <i class="${rankIcon} ${idx < 3 ? 'text-' + (idx === 0 ? 'red' : idx === 1 ? 'orange' : 'yellow') + '-500' : 'text-green-500'} text-xl"></i>
-            </div>
-            
-            <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-500">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-xs text-gray-600 dark:text-gray-400">Total Durasi:</span>
-                <span class="font-bold text-gray-900 dark:text-white text-sm">${product.total_durasi} menit</span>
-              </div>
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-xs text-gray-600 dark:text-gray-400">Setara:</span>
-                <span class="font-semibold text-blue-600 dark:text-blue-400 text-sm">${totalHari} hari</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-600 dark:text-gray-400">Jumlah Proses:</span>
-                <span class="font-medium text-gray-900 dark:text-white text-sm">${product.jumlah_proses} proses</span>
-              </div>
-            </div>
-            
-            <div class="mt-3 text-center">
-              <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                <i class="fas fa-eye mr-1"></i>Klik untuk lihat detail
-              </span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-    
-    window.quickViewProduct = function(kodeProduk) {
-      // Langsung tampilkan VSM detail untuk produk yang dipilih
-      displayVSM(kodeProduk);
-    };
-    
-    // Input VSM functionality
-    document.getElementById('inputLoginBtn').addEventListener('click', () => {
-      const password = document.getElementById('inputPassword').value;
-      
-      if (password === ADMIN_PASSWORD) {
-        isInputLoggedIn = true;
-        document.getElementById('inputLoginForm').classList.add('hidden');
-        document.getElementById('inputVsmForm').classList.remove('hidden');
-        showToast('Login berhasil', 'success');
-      } else {
-        showToast('Password salah', 'error');
-      }
-    });
-    
-    document.getElementById('inputArea').addEventListener('change', (e) => {
-      const area = e.target.value;
-      const produkSelect = document.getElementById('inputProdukDropdown');
-      
-      if (!area) {
-        produkSelect.disabled = true;
-        produkSelect.innerHTML = '<option value="">-- PILIH AREA DULU --</option>';
-        return;
-      }
-      
-      const masterProducts = allData.master_produk.filter(d => d.area === area);
-      
-      produkSelect.disabled = false;
-      produkSelect.innerHTML = '<option value="">-- PILIH PRODUK --</option>';
-      masterProducts.forEach(produk => {
-        const option = document.createElement('option');
-        option.value = JSON.stringify({ kode: produk.kode_produk, nama: produk.nama_produk });
-        option.textContent = `${produk.kode_produk} - ${produk.nama_produk}`;
-        produkSelect.appendChild(option);
-      });
-    });
-    
-    document.getElementById('addProcessBtn').addEventListener('click', () => {
-      const area = document.getElementById('inputArea').value;
-      const produkData = document.getElementById('inputProdukDropdown').value;
-      
-      if (!area || !produkData) {
-        showToast('PILIH AREA DAN PRODUK TERLEBIH DAHULU', 'error');
-        return;
-      }
-      
-      const prosesList = allData.master_proses;
-      const mesinList = allData.master_mesin;
-      const personilList = allData.master_personil;
-      
-      const prosesSelect = document.getElementById('modalProsesName');
-      const mesinSelect = document.getElementById('modalMesin');
-      
-      prosesSelect.innerHTML = '<option value="">-- PILIH PROSES --</option>';
-      prosesList.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.name;
-        opt.textContent = p.name;
-        prosesSelect.appendChild(opt);
-      });
-      
-      mesinSelect.innerHTML = '<option value="">-- PILIH MESIN --</option>';
-      mesinList.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.name;
-        opt.textContent = m.name;
-        mesinSelect.appendChild(opt);
-      });
-      
-      const personilContainer = document.getElementById('modalPersonilCheckboxes');
-      personilContainer.innerHTML = '';
-      
-      if (personilList.length === 0) {
-        personilContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">Belum ada data personil</p>';
-      } else {
-        personilList.forEach(p => {
-          const checkboxDiv = document.createElement('div');
-          checkboxDiv.className = 'flex items-center';
-          checkboxDiv.innerHTML = `
-            <input type="checkbox" id="personil_${p.id}" value="${p.name}" class="personil-checkbox w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 focus:ring-2">
-            <label for="personil_${p.id}" class="ml-2 text-sm text-gray-900 dark:text-white cursor-pointer">${p.name}</label>
-          `;
-          personilContainer.appendChild(checkboxDiv);
+
+    // Add Audit Log
+    async function addAuditLog(action, details, area = '', product = '', category = '', initial = '') {
+      try {
+        const { error } = await supabaseClient.from('audit_logs').insert({
+          action: action,
+          details: details,
+          area: area || null,
+          product: product || null,
+          category: category || null,
+          operator_initial: initial || null
         });
-      }
-      
-      document.getElementById('processModal').classList.remove('hidden');
-      document.getElementById('processModal').classList.add('flex');
-      
-      document.getElementById('modalProsesName').value = '';
-      document.getElementById('modalMesin').value = '';
-      document.getElementById('modalDurasi').value = '';
-      document.getElementById('modalProblems').value = '';
-      document.querySelectorAll('.personil-checkbox').forEach(cb => cb.checked = false);
-    });
-    
-    document.getElementById('cancelProcessBtn').addEventListener('click', () => {
-      document.getElementById('processModal').classList.add('hidden');
-      document.getElementById('processModal').classList.remove('flex');
-    });
-    
-    document.getElementById('saveProcessBtn').addEventListener('click', async () => {
-      const prosesName = document.getElementById('modalProsesName').value.trim();
-      const mesin = document.getElementById('modalMesin').value.trim();
-      const durasi = document.getElementById('modalDurasi').value;
-      const problems = document.getElementById('modalProblems').value.trim();
-      
-      const selectedPersonil = Array.from(document.querySelectorAll('.personil-checkbox:checked')).map(cb => cb.value);
-      const personil = selectedPersonil.join(', ');
-      
-      if (!prosesName || !mesin || !durasi || selectedPersonil.length === 0) {
-        showToast('LENGKAPI SEMUA FIELD YANG WAJIB DIISI', 'error');
-        return;
-      }
-      
-      const area = document.getElementById('inputArea').value;
-      const produkData = JSON.parse(document.getElementById('inputProdukDropdown').value);
-      
-      const saveBtn = document.getElementById('saveProcessBtn');
-      saveBtn.disabled = true;
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>MENYIMPAN...';
-      
-      try {
-        const newProcess = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          area: area,
-          kode_produk: produkData.kode,
-          nama_produk: produkData.nama,
-          proses_name: prosesName,
-          mesin: mesin,
-          durasi: parseInt(durasi),
-          personil: personil,
-          problems: problems,
-          order: tempProcesses.length,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        const { error } = await supabaseClient
-          .from('vsm')
-          .insert([newProcess]);
         
         if (error) throw error;
-        
-        tempProcesses.push(newProcess);
-        renderProcessList();
-        
-        document.getElementById('submitVsmBtn').disabled = false;
-        
-        await logActivity('TAMBAH PROSES', `Menambahkan proses ${prosesName} untuk produk ${produkData.kode} (${produkData.nama})`);
-        
-        showToast('PROSES BERHASIL DITAMBAHKAN', 'success');
-        
-        document.getElementById('processModal').classList.add('hidden');
-        document.getElementById('processModal').classList.remove('flex');
       } catch (error) {
-        console.error('Error saving process:', error);
-        showToast('GAGAL MENYIMPAN PROSES', 'error');
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>SAVE PROSES';
+        console.error('Error adding audit log:', error);
       }
-    });
-    
-    function renderProcessList() {
-      const container = document.getElementById('processList');
-      container.innerHTML = '';
-      
-      if (tempProcesses.length === 0) {
-        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">Belum ada proses ditambahkan</p>';
-        return;
-      }
-      
-      tempProcesses.forEach((process, idx) => {
-        const card = document.createElement('div');
-        card.className = 'bg-blue-50 dark:bg-gray-700 rounded-lg p-4';
-        card.innerHTML = `
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <h4 class="font-semibold text-gray-900 dark:text-white">${idx + 1}. ${process.proses_name}</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Mesin: ${process.mesin} | Durasi: ${process.durasi} menit</p>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Personil: ${process.personil}</p>
-              ${process.problems ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Problem: ${process.problems}</p>` : ''}
-            </div>
-            <button class="text-red-600 hover:text-red-700 ml-2" onclick="removeProcess(${idx})">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
     }
-    
-    window.removeProcess = async function(idx) {
-      const process = tempProcesses[idx];
-      
-      const deleteBtn = event.target.closest('button');
-      deleteBtn.disabled = true;
-      deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-      
-      try {
-        const { error } = await supabaseClient
-          .from('vsm')
-          .delete()
-          .eq('id', process.id);
-        
-        if (error) throw error;
-        
-        tempProcesses.splice(idx, 1);
-        renderProcessList();
-        
-        const submitBtn = document.getElementById('submitVsmBtn');
-        submitBtn.disabled = tempProcesses.length === 0;
-        
-        showToast('Proses dihapus', 'success');
-      } catch (error) {
-        console.error('Error deleting process:', error);
-        showToast('Gagal menghapus proses', 'error');
-      } finally {
-        deleteBtn.disabled = false;
-        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-      }
-    };
-    
-    document.getElementById('submitVsmBtn').addEventListener('click', async () => {
-      if (tempProcesses.length === 0) {
-        showToast('TAMBAHKAN MINIMAL 1 PROSES', 'error');
-        return;
-      }
-      
-      const submitBtn = document.getElementById('submitVsmBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>MENYIMPAN VSM...';
-      
-      const produkData = JSON.parse(document.getElementById('inputProdukDropdown').value);
-      
-      await logActivity('SUBMIT VSM', `Submit VSM untuk produk ${produkData.kode} - ${produkData.nama} dengan ${tempProcesses.length} proses`);
-      
-      // Reload data dari database untuk memastikan sync
-      await reloadData();
-      
-      showToast('VSM BERHASIL DISIMPAN!', 'success');
-      
-      tempProcesses = [];
-      document.getElementById('inputArea').value = '';
-      document.getElementById('inputProdukDropdown').value = '';
-      document.getElementById('inputProdukDropdown').disabled = true;
-      document.getElementById('inputProdukDropdown').innerHTML = '<option value="">-- PILIH AREA DULU --</option>';
-      renderProcessList();
-      
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>SUBMIT VSM';
+
+    // Tab Navigation
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Auto-lock management tab when switching away
+        if (btn.dataset.tab !== 'management' && isAdminLoggedIn) {
+          isAdminLoggedIn = false;
+          document.getElementById('admin-panel').classList.add('hidden');
+          document.getElementById('admin-login').classList.remove('hidden');
+          document.getElementById('admin-password').value = '';
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active', 'text-emerald-400'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-gray-400'));
+        btn.classList.add('tab-active', 'text-emerald-400');
+        btn.classList.remove('text-gray-400');
+
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`${btn.dataset.tab}-tab`).classList.remove('hidden');
+      });
     });
-    
-    // Management functionality
-    document.getElementById('managementLoginBtn').addEventListener('click', () => {
-      const password = document.getElementById('managementPassword').value;
-      
-      if (password === ADMIN_PASSWORD) {
-        isManagementLoggedIn = true;
-        document.getElementById('managementLoginForm').classList.add('hidden');
-        document.getElementById('managementContent').classList.remove('hidden');
-        
-        document.querySelector('.mgmt-tab').click();
-        
-        showToast('Login berhasil', 'success');
-      } else {
-        showToast('Password salah', 'error');
-      }
-    });
-    
-    let currentMgmtTab = 'proses';
-    
+
+    // Management Sub-tabs
     document.querySelectorAll('.mgmt-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.mgmt-tab').forEach(t => {
-          t.classList.remove('border-blue-600', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400');
+          t.classList.remove('mgmt-tab-active', 'border-emerald-500', 'text-emerald-400', 'border-b-2');
+          t.classList.add('text-gray-400');
         });
-        tab.classList.add('border-blue-600', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400');
-        
-        currentMgmtTab = tab.dataset.tab;
-        updateManagementContent();
+        tab.classList.add('mgmt-tab-active', 'border-emerald-500', 'text-emerald-400', 'border-b-2');
+        tab.classList.remove('text-gray-400');
+
+        document.querySelectorAll('.mgmt-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`mgmt-${tab.dataset.mgmt}`).classList.remove('hidden');
       });
     });
-    
-    function updateManagementContent() {
-      const tab = currentMgmtTab;
-      const content = document.getElementById('mgmtTabContent');
-      
-      if (tab === 'proses') {
-        const prosesList = allData.master_proses;
-        content.innerHTML = `
-          <div class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">TAMBAH PROSES BARU</h4>
-            <div class="flex gap-2">
-              <input type="text" id="newProsesName" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="NAMA PROSES" style="text-transform: uppercase">
-              <button onclick="addMasterProses()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-                <i class="fas fa-plus mr-2"></i>TAMBAH
-              </button>
-            </div>
-          </div>
-          <div class="space-y-2">
-            ${prosesList.length === 0 ? 
-              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA DATA PROSES</p>' :
-              prosesList.map(item => `
-                <div class="bg-white dark:bg-gray-600 rounded-lg p-4 flex justify-between items-center">
-                  <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
-                  <button class="text-red-600 hover:text-red-700" onclick="deleteMasterData('${item.id}', 'master_proses')">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              `).join('')
-            }
-          </div>
-        `;
-      } else if (tab === 'mesin') {
-        const mesinList = allData.master_mesin;
-        content.innerHTML = `
-          <div class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">TAMBAH MESIN BARU</h4>
-            <div class="flex gap-2">
-              <input type="text" id="newMesinName" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="NAMA MESIN" style="text-transform: uppercase">
-              <button onclick="addMasterMesin()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-                <i class="fas fa-plus mr-2"></i>TAMBAH
-              </button>
-            </div>
-          </div>
-          <div class="space-y-2">
-            ${mesinList.length === 0 ? 
-              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA DATA MESIN</p>' :
-              mesinList.map(item => `
-                <div class="bg-white dark:bg-gray-600 rounded-lg p-4 flex justify-between items-center">
-                  <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
-                  <button class="text-red-600 hover:text-red-700" onclick="deleteMasterData('${item.id}', 'master_mesin')">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              `).join('')
-            }
-          </div>
-        `;
-      } else if (tab === 'personil') {
-        const personilList = allData.master_personil;
-        content.innerHTML = `
-          <div class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">TAMBAH PERSONIL BARU</h4>
-            <div class="flex gap-2">
-              <input type="text" id="newPersonilName" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="NAMA PERSONIL" style="text-transform: uppercase">
-              <button onclick="addMasterPersonil()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-                <i class="fas fa-plus mr-2"></i>TAMBAH
-              </button>
-            </div>
-          </div>
-          <div class="space-y-2">
-            ${personilList.length === 0 ? 
-              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA DATA PERSONIL</p>' :
-              personilList.map(item => `
-                <div class="bg-white dark:bg-gray-600 rounded-lg p-4 flex justify-between items-center">
-                  <span class="font-medium text-gray-900 dark:text-white">${item.name}</span>
-                  <button class="text-red-600 hover:text-red-700" onclick="deleteMasterData('${item.id}', 'master_personil')">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              `).join('')
-            }
-          </div>
-        `;
-      } else if (tab === 'produk') {
-        const produkList = allData.master_produk;
-        content.innerHTML = `
-          <div class="mb-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">TAMBAH PRODUK BARU</h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <input type="text" id="newProdukKode" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="KODE PRODUK" style="text-transform: uppercase">
-              <input type="text" id="newProdukNama" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" placeholder="NAMA PRODUK" style="text-transform: uppercase">
-              <select id="newProdukArea" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-                <option value="">-- PILIH AREA --</option>
-                <option value="INJEKSI">INJEKSI</option>
-                <option value="NON INJEKSI">NON INJEKSI</option>
-              </select>
-            </div>
-            <button onclick="addMasterProduk()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-              <i class="fas fa-plus mr-2"></i>TAMBAH PRODUK
-            </button>
-          </div>
-          <div class="space-y-2">
-            ${produkList.length === 0 ? 
-              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA DATA PRODUK</p>' :
-              produkList.map(item => `
-                <div class="bg-white dark:bg-gray-600 rounded-lg p-4 flex justify-between items-center">
-                  <div>
-                    <span class="font-medium text-gray-900 dark:text-white">${item.kode_produk} - ${item.nama_produk}</span>
-                    <span class="text-sm text-gray-600 dark:text-gray-400 ml-4">AREA: ${item.area}</span>
-                  </div>
-                  <button class="text-red-600 hover:text-red-700" onclick="deleteMasterData('${item.id}', 'master_produk')">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              `).join('')
-            }
-          </div>
-        `;
-      } else if (tab === 'vsm') {
-        const vsmList = allData.vsm;
-        const groupedVsm = {};
+
+    // Update Dropdowns
+    function updateDropdowns() {
+      const areaOptions = '<option value="">PILIH AREA</option>' + areas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+      const categoryOptions = '<option value="">PILIH KATEGORI</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      const productOptions = '<option value="">PILIH PRODUK</option>' + products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+      const operatorOptions = '<option value="">PILIH OPERATOR</option>' + operators.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+
+      document.getElementById('input-area').innerHTML = areaOptions;
+      document.getElementById('input-category').innerHTML = categoryOptions;
+      document.getElementById('input-product').innerHTML = productOptions;
+      document.getElementById('input-operator').innerHTML = operatorOptions;
+
+      // Filter dropdowns
+      document.getElementById('filter-area').innerHTML = '<option value="">SEMUA AREA</option>' + areas.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+      document.getElementById('filter-product').innerHTML = '<option value="">SEMUA PRODUK</option>' + products.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+      document.getElementById('filter-category').innerHTML = '<option value="">SEMUA KATEGORI</option>' + categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      document.getElementById('filter-operator').innerHTML = '<option value="">SEMUA OPERATOR</option>' + operators.map(o => `<option value="${o.name}">${o.name}</option>`).join('');
+
+      // Audit filter dropdowns
+      document.getElementById('audit-filter-area').innerHTML = '<option value="">SEMUA</option>' + areas.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+      document.getElementById('audit-filter-product').innerHTML = '<option value="">SEMUA</option>' + products.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+      document.getElementById('audit-filter-category').innerHTML = '<option value="">SEMUA</option>' + categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      document.getElementById('audit-filter-initial').innerHTML = '<option value="">SEMUA</option>' + operators.map(o => `<option value="${o.name}">${o.name}</option>`).join('');
+    }
+
+    // Calculate BRFT Percentage
+    function calculateBRFT(month, targetValue, findingsCount) {
+      if (!targetValue || targetValue <= 0) return null;
+      return ((targetValue - findingsCount) / targetValue) * 100;
+    }
+
+    // Update Dashboard
+    function updateDashboard() {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      // Apply filters
+      let filteredFindings = [...findings];
+      const dateFrom = document.getElementById('filter-date-from').value;
+      const dateTo = document.getElementById('filter-date-to').value;
+      const filterArea = document.getElementById('filter-area').value;
+      const filterProduct = document.getElementById('filter-product').value;
+      const filterCategory = document.getElementById('filter-category').value;
+      const filterOperator = document.getElementById('filter-operator').value;
+
+      if (dateFrom) filteredFindings = filteredFindings.filter(f => f.date >= dateFrom);
+      if (dateTo) filteredFindings = filteredFindings.filter(f => f.date <= dateTo);
+      if (filterArea) filteredFindings = filteredFindings.filter(f => f.area_name === filterArea);
+      if (filterProduct) filteredFindings = filteredFindings.filter(f => f.product_name === filterProduct);
+      if (filterCategory) filteredFindings = filteredFindings.filter(f => f.category_name === filterCategory);
+      if (filterOperator) filteredFindings = filteredFindings.filter(f => f.operator_name === filterOperator);
+
+      // Summary cards - show filtered total
+      document.getElementById('total-findings').textContent = filteredFindings.length;
+
+      // Determine which months are covered by the filter
+      let targetValue = 0;
+      let monthFindings = 0;
+      let isValidForBRFT = false;
+      let coveredMonths = [];
+
+      if (dateFrom && dateTo) {
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
         
-        vsmList.forEach(item => {
-          const key = `${item.area}-${item.kode_produk}`;
-          if (!groupedVsm[key]) {
-            groupedVsm[key] = {
-              area: item.area,
-              kode_produk: item.kode_produk,
-              nama_produk: item.nama_produk,
-              processes: []
-            };
+        // Generate list of all months covered by the filter
+        let currentDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+        while (currentDate <= toDate) {
+          const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+          const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+          const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+          
+          // Format dates as YYYY-MM-DD strings for comparison
+          const firstDayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-01`;
+          const lastDayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfMonth.getDate()).padStart(2, '0')}`;
+          
+          // Check if filter range covers entire month (from <= first day AND to >= last day)
+          const isFullMonth = dateFrom <= firstDayStr && dateTo >= lastDayStr;
+          
+          if (isFullMonth && !coveredMonths.includes(monthKey)) {
+            coveredMonths.push(monthKey);
           }
-          groupedVsm[key].processes.push(item);
-        });
+          
+          // Move to next month
+          currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+        }
         
-        content.innerHTML = `
-          <div class="space-y-4">
-            ${Object.values(groupedVsm).length === 0 ? 
-              '<p class="text-gray-500 dark:text-gray-400 text-center py-8">BELUM ADA VSM</p>' :
-              Object.values(groupedVsm).map(vsm => `
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <div class="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 class="font-semibold text-gray-900 dark:text-white">${vsm.nama_produk}</h4>
-                      <p class="text-sm text-gray-600 dark:text-gray-400">KODE: ${vsm.kode_produk} | AREA: ${vsm.area}</p>
-                    </div>
-                    <div class="flex gap-2">
-                      <button class="text-blue-600 hover:text-blue-700" onclick="editVsmGroup('${vsm.kode_produk}')">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="text-red-600 hover:text-red-700" onclick="deleteVsmGroup('${vsm.kode_produk}')">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="space-y-2">
-                    ${vsm.processes.sort((a, b) => (a.order || 0) - (b.order || 0)).map((p, idx) => `
-                      <div class="bg-white dark:bg-gray-600 rounded p-3 text-sm">
-                        <span class="font-medium text-gray-900 dark:text-white">${idx + 1}. ${p.proses_name}</span>
-                        <span class="text-gray-600 dark:text-gray-400 ml-2">(${p.durasi} MENIT, ${p.personil})</span>
-                      </div>
-                    `).join('')}
-                  </div>
-                </div>
-              `).join('')
+        // If we have at least one full month covered, calculate totals
+        if (coveredMonths.length > 0) {
+          isValidForBRFT = true;
+          monthFindings = filteredFindings.length;
+          
+          // Sum up targets for all covered months
+          coveredMonths.forEach(month => {
+            const monthTarget = targets.find(t => t.target_month === month);
+            if (monthTarget) {
+              targetValue += monthTarget.target_value;
             }
-          </div>
-        `;
+          });
+        }
+      } else if (!dateFrom && !dateTo) {
+        // No filter - use current month
+        isValidForBRFT = true;
+        monthFindings = filteredFindings.length;
+        const monthTarget = targets.find(t => t.target_month === currentMonth);
+        targetValue = monthTarget ? monthTarget.target_value : 0;
       }
+
+      document.getElementById('target-docs').textContent = isValidForBRFT ? targetValue : '-';
+
+      const brftPercent = isValidForBRFT && targetValue > 0 ? ((targetValue - monthFindings) / targetValue) * 100 : null;
+      const brftEl = document.getElementById('brft-percentage');
+      const indicatorEl = document.getElementById('brft-indicator');
+
+      if (brftPercent !== null) {
+        brftEl.textContent = brftPercent.toFixed(1) + '%';
+        if (brftPercent >= 100) {
+          brftEl.className = 'text-3xl font-bold text-emerald-400';
+          indicatorEl.className = 'w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center';
+        } else {
+          brftEl.className = 'text-3xl font-bold text-red-400';
+          indicatorEl.className = 'w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center';
+        }
+      } else {
+        brftEl.textContent = '-';
+        brftEl.className = 'text-3xl font-bold text-gray-400';
+        indicatorEl.className = 'w-12 h-12 bg-gray-500/20 rounded-xl flex items-center justify-center';
+      }
+
+      // Update charts
+      updateCharts(filteredFindings);
+
+      // Update table
+      updateFindingsTable(filteredFindings);
     }
-    
-    let editVsmData = [];
-    
-    window.editVsmGroup = function(kodeProduk) {
-      const vsmItems = allData.vsm.filter(d => d.kode_produk === kodeProduk).sort((a, b) => (a.order || 0) - (b.order || 0));
-      
-      if (vsmItems.length === 0) return;
-      
-      editVsmData = JSON.parse(JSON.stringify(vsmItems));
-      
-      const firstItem = vsmItems[0];
-      document.getElementById('editVsmProdukInfo').textContent = `${firstItem.kode_produk} - ${firstItem.nama_produk} (${firstItem.area})`;
-      
-      renderEditVsmProcessList();
-      
-      document.getElementById('editVsmModal').classList.remove('hidden');
-      document.getElementById('editVsmModal').classList.add('flex');
-    };
-    
-    function renderEditVsmProcessList() {
-      const container = document.getElementById('editVsmProcessList');
-      container.innerHTML = '';
-      
-      const prosesList = allData.master_proses;
-      const mesinList = allData.master_mesin;
-      const personilList = allData.master_personil;
-      
-      editVsmData.forEach((process, idx) => {
-        const card = document.createElement('div');
-        card.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4';
-        
-        // Build proses dropdown
-        let prosesOptions = '<option value="">-- PILIH PROSES --</option>';
-        prosesList.forEach(p => {
-          prosesOptions += `<option value="${p.name}" ${p.name === process.proses_name ? 'selected' : ''}>${p.name}</option>`;
-        });
-        
-        // Build mesin dropdown
-        let mesinOptions = '<option value="">-- PILIH MESIN --</option>';
-        mesinList.forEach(m => {
-          mesinOptions += `<option value="${m.name}" ${m.name === process.mesin ? 'selected' : ''}>${m.name}</option>`;
-        });
-        
-        // Build personil checkboxes
-        let personilCheckboxes = '';
-        const selectedPersonil = process.personil.split(',').map(p => p.trim());
-        personilList.forEach(p => {
-          const isChecked = selectedPersonil.includes(p.name) ? 'checked' : '';
-          personilCheckboxes += `
-            <div class="flex items-center">
-              <input type="checkbox" id="edit_personil_${idx}_${p.id}" value="${p.name}" ${isChecked} data-idx="${idx}" class="edit-personil-checkbox w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 focus:ring-2">
-              <label for="edit_personil_${idx}_${p.id}" class="ml-2 text-sm text-gray-900 dark:text-white cursor-pointer">${p.name}</label>
-            </div>
-          `;
-        });
-        
-        card.innerHTML = `
-          <div class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600 flex justify-between items-center">
-            <h4 class="font-semibold text-gray-900 dark:text-white">PROSES ${idx + 1}</h4>
-            <button class="delete-edit-process-btn text-red-600 hover:text-red-700" data-idx="${idx}">
-              <i class="fas fa-trash"></i> HAPUS
-            </button>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">NAMA PROSES *</label>
-              <select data-idx="${idx}" data-field="proses_name" class="edit-vsm-field w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-                ${prosesOptions}
-              </select>
-            </div>
-            
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">MESIN *</label>
-              <select data-idx="${idx}" data-field="mesin" class="edit-vsm-field w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-                ${mesinOptions}
-              </select>
-            </div>
-            
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">DURASI (MENIT) *</label>
-              <input type="number" value="${process.durasi}" data-idx="${idx}" data-field="durasi" class="edit-vsm-field w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" min="1">
-            </div>
-            
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">PERSONIL BERKOMPETEN *</label>
-              <div class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 max-h-32 overflow-y-auto space-y-2">
-                ${personilCheckboxes}
-              </div>
-            </div>
-            
-            <div class="md:col-span-2">
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">PROBLEMS</label>
-              <textarea rows="2" data-idx="${idx}" data-field="problems" class="edit-vsm-field w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500" style="text-transform: uppercase">${process.problems || ''}</textarea>
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-      
-      // Handle regular field changes
-      document.querySelectorAll('.edit-vsm-field').forEach(field => {
-        field.addEventListener('change', (e) => {
-          const idx = parseInt(e.target.dataset.idx);
-          const fieldName = e.target.dataset.field;
-          
-          if (fieldName === 'durasi') {
-            editVsmData[idx][fieldName] = parseInt(e.target.value) || 0;
-          } else {
-            editVsmData[idx][fieldName] = e.target.value.trim();
+
+    // Update Charts
+    function updateCharts(filteredFindings) {
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+          legend: { display: false },
+          datalabels: {
+            anchor: 'center',
+            align: 'center',
+            color: '#ffffff',
+            font: { size: 14, weight: 'bold' },
+            formatter: (value) => value > 0 ? value : ''
           }
-        });
-      });
-      
-      // Handle personil checkbox changes
-      document.querySelectorAll('.edit-personil-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-          const idx = parseInt(e.target.dataset.idx);
-          const selectedPersonil = Array.from(
-            document.querySelectorAll(`.edit-personil-checkbox[data-idx="${idx}"]:checked`)
-          ).map(cb => cb.value);
-          
-          editVsmData[idx].personil = selectedPersonil.join(', ');
-        });
-      });
-      
-      // Handle delete process
-      document.querySelectorAll('.delete-edit-process-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const idx = parseInt(e.currentTarget.dataset.idx);
-          
-          if (editVsmData.length === 1) {
-            showToast('MINIMAL HARUS ADA 1 PROSES', 'error');
-            return;
-          }
-          
-          editVsmData.splice(idx, 1);
-          renderEditVsmProcessList();
-          showToast('PROSES DIHAPUS', 'success');
-        });
-      });
-    }
-    
-    document.getElementById('cancelEditVsmBtn').addEventListener('click', () => {
-      document.getElementById('editVsmModal').classList.add('hidden');
-      document.getElementById('editVsmModal').classList.remove('flex');
-      editVsmData = [];
-    });
-    
-    document.getElementById('addEditProcessBtn').addEventListener('click', () => {
-      if (editVsmData.length === 0) return;
-      
-      const firstProcess = editVsmData[0];
-      const newProcess = {
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        area: firstProcess.area,
-        kode_produk: firstProcess.kode_produk,
-        nama_produk: firstProcess.nama_produk,
-        proses_name: '',
-        mesin: '',
-        durasi: 0,
-        personil: '',
-        problems: '',
-        order: editVsmData.length,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        },
+        scales: {
+          x: { grid: { color: '#374151' }, ticks: { color: '#9ca3af', font: { size: 10 } } },
+          y: { grid: { color: '#374151' }, ticks: { color: '#9ca3af', font: { size: 10 } } }
+        }
       };
-      
-      editVsmData.push(newProcess);
-      renderEditVsmProcessList();
-      showToast('PROSES BARU DITAMBAHKAN', 'success');
-      
-      // Scroll ke proses baru
-      setTimeout(() => {
-        const container = document.getElementById('editVsmProcessList');
-        container.scrollTop = container.scrollHeight;
-      }, 100);
-    });
-    
-    document.getElementById('saveEditVsmBtn').addEventListener('click', async () => {
-      // Validasi semua field wajib
-      for (let i = 0; i < editVsmData.length; i++) {
-        const process = editVsmData[i];
-        if (!process.proses_name || !process.mesin || !process.durasi || !process.personil) {
-          showToast(`LENGKAPI SEMUA FIELD WAJIB PADA PROSES ${i + 1}`, 'error');
-          return;
+
+      // Monthly trend data
+      const monthlyData = {};
+      filteredFindings.forEach(f => {
+        if (f.date) {
+          const month = f.date.substring(0, 7);
+          monthlyData[month] = (monthlyData[month] || 0) + 1;
         }
-      }
+      });
+
+      const months = Object.keys(monthlyData).sort();
       
-      const saveBtn = document.getElementById('saveEditVsmBtn');
-      saveBtn.disabled = true;
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>MENYIMPAN...';
-      
-      try {
-        // Hapus semua proses lama untuk produk ini
-        const kodeProduk = editVsmData[0].kode_produk;
-        const oldProcesses = allData.vsm.filter(d => d.kode_produk === kodeProduk);
-        
-        for (const oldProcess of oldProcesses) {
-          const { error } = await supabaseClient
-            .from('vsm')
-            .delete()
-            .eq('id', oldProcess.id);
-          
-          if (error) throw error;
+      // Format months as MMM YYYY (e.g., JAN 2026)
+      const monthLabels = months.map(m => {
+        const [year, month] = m.split('-');
+        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        return `${monthNames[parseInt(month) - 1]} ${year}`;
+      });
+
+      const brftTrend = months.map(m => {
+        const target = targets.find(t => t.target_month === m);
+        if (target) {
+          const pct = calculateBRFT(m, target.target_value, monthlyData[m]);
+          return pct !== null ? pct : 0;
         }
-        
-        // Insert semua proses baru (termasuk yang ditambahkan)
-        for (let i = 0; i < editVsmData.length; i++) {
-          const process = editVsmData[i];
-          const { error } = await supabaseClient
-            .from('vsm')
-            .insert([{
-              id: process.id,
-              area: process.area,
-              kode_produk: process.kode_produk,
-              nama_produk: process.nama_produk,
-              proses_name: process.proses_name,
-              mesin: process.mesin,
-              durasi: process.durasi,
-              personil: process.personil,
-              problems: process.problems,
-              order: i,
-              created_at: process.created_at,
-              updated_at: new Date().toISOString()
-            }]);
-          
-          if (error) throw error;
-        }
-        
-        await logActivity('EDIT VSM', `Mengedit VSM untuk produk ${editVsmData[0].kode_produk} - ${editVsmData[0].nama_produk}`);
-        await reloadData();
-        
-        showToast('VSM BERHASIL DIUPDATE', 'success');
-        
-        document.getElementById('editVsmModal').classList.add('hidden');
-        document.getElementById('editVsmModal').classList.remove('flex');
-        editVsmData = [];
-      } catch (error) {
-        console.error('Error updating VSM:', error);
-        showToast('GAGAL MENGUPDATE VSM', 'error');
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>SIMPAN PERUBAHAN';
-      }
-    });
-    
-    window.removeEditProcess = function(idx) {
-      if (editVsmData.length === 1) {
-        showToast('MINIMAL HARUS ADA 1 PROSES', 'error');
+        return 0;
+      });
+
+      // Chart 1: BRFT Trend
+      if (charts.trend) charts.trend.destroy();
+      charts.trend = new Chart(document.getElementById('chart-trend'), {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            data: brftTrend,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: { 
+          ...chartOptions, 
+          scales: { 
+            ...chartOptions.scales, 
+            y: { ...chartOptions.scales.y, min: 0, max: 100 } 
+          },
+          plugins: {
+            ...chartOptions.plugins,
+            datalabels: {
+              ...chartOptions.plugins.datalabels,
+              formatter: (value) => value > 0 ? value.toFixed(1) + '%' : ''
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+
+      // Chart 2: Monthly Findings
+      if (charts.monthly) charts.monthly.destroy();
+      charts.monthly = new Chart(document.getElementById('chart-monthly'), {
+        type: 'bar',
+        data: {
+          labels: monthLabels,
+          datasets: [{ data: months.map(m => monthlyData[m]), backgroundColor: '#f59e0b' }]
+        },
+        options: chartOptions,
+        plugins: [ChartDataLabels]
+      });
+
+      // Chart 3: By Area
+      const areaData = {};
+      filteredFindings.forEach(f => { if (f.area) areaData[f.area] = (areaData[f.area] || 0) + 1; });
+      if (charts.area) charts.area.destroy();
+      charts.area = new Chart(document.getElementById('chart-area'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(areaData),
+          datasets: [{ data: Object.values(areaData), backgroundColor: '#3b82f6' }]
+        },
+        options: chartOptions,
+        plugins: [ChartDataLabels]
+      });
+
+      // Chart 4: By Product
+      const productData = {};
+      filteredFindings.forEach(f => { if (f.product_code) productData[f.product_code] = (productData[f.product_code] || 0) + 1; });
+      if (charts.product) charts.product.destroy();
+      charts.product = new Chart(document.getElementById('chart-product'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(productData),
+          datasets: [{ data: Object.values(productData), backgroundColor: '#8b5cf6' }]
+        },
+        options: chartOptions,
+        plugins: [ChartDataLabels]
+      });
+
+      // Chart 5: By Operator
+      const operatorData = {};
+      filteredFindings.forEach(f => { if (f.operator_initial) operatorData[f.operator_initial] = (operatorData[f.operator_initial] || 0) + 1; });
+      if (charts.operator) charts.operator.destroy();
+      charts.operator = new Chart(document.getElementById('chart-operator'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(operatorData),
+          datasets: [{ data: Object.values(operatorData), backgroundColor: '#ec4899' }]
+        },
+        options: chartOptions,
+        plugins: [ChartDataLabels]
+      });
+
+      // Chart 6: By Category
+      const categoryData = {};
+      filteredFindings.forEach(f => { if (f.category) categoryData[f.category] = (categoryData[f.category] || 0) + 1; });
+      if (charts.category) charts.category.destroy();
+      charts.category = new Chart(document.getElementById('chart-category'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(categoryData),
+          datasets: [{ data: Object.values(categoryData), backgroundColor: '#14b8a6' }]
+        },
+        options: chartOptions,
+        plugins: [ChartDataLabels]
+      });
+    }
+
+    // Update Findings Table
+    function updateFindingsTable(filteredFindings) {
+      const tbody = document.getElementById('findings-table');
+      if (filteredFindings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-500">TIDAK ADA DATA</td></tr>';
         return;
       }
-      
-      editVsmData.splice(idx, 1);
-      renderEditVsmProcessList();
-      showToast('PROSES DIHAPUS', 'success');
-    };
-    
-    window.deleteVsmGroup = async function(kodeProduk) {
-      const vsmItems = allData.vsm.filter(d => d.kode_produk === kodeProduk);
-      
-      if (vsmItems.length === 0) return;
-      
-      const confirmDiv = document.createElement('div');
-      confirmDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-      confirmDiv.innerHTML = `
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md">
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">KONFIRMASI HAPUS</h3>
-          <p class="text-gray-600 dark:text-gray-400 mb-6">HAPUS VSM UNTUK PRODUK ${kodeProduk}?</p>
+
+      tbody.innerHTML = filteredFindings.sort((a, b) => new Date(b.date) - new Date(a.date)).map(f => {
+        // Format date as dd MMM YYYY (e.g., 22 JAN 2026)
+        let formattedDate = '-';
+        if (f.date) {
+          const [year, month, day] = f.date.split('-');
+          const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+          formattedDate = `${day} ${monthNames[parseInt(month) - 1]} ${year}`;
+        }
+
+        return `
+          <tr class="hover:bg-gray-700/50">
+            <td class="py-3 px-3 text-gray-300">${formattedDate}</td>
+            <td class="py-3 px-3 text-gray-300">${f.operator_initial || '-'}</td>
+            <td class="py-3 px-3 text-gray-300">${f.area || '-'}</td>
+            <td class="py-3 px-3"><span class="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs">${f.category || '-'}</span></td>
+            <td class="py-3 px-3 text-gray-300">${f.batch_number || '-'}</td>
+            <td class="py-3 px-3 text-gray-300 max-w-xs truncate">${f.description || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Update Management Lists
+    function updateManagementLists() {
+      // Operators
+      document.getElementById('operators-list').innerHTML = operators.length === 0
+        ? '<p class="text-gray-500 text-center py-4">TIDAK ADA DATA</p>'
+        : operators.map(o => createMasterItem(o, 'operator')).join('');
+
+      // Products
+      document.getElementById('products-list').innerHTML = products.length === 0
+        ? '<p class="text-gray-500 text-center py-4">TIDAK ADA DATA</p>'
+        : products.map(p => createMasterItem(p, 'product')).join('');
+
+      // Areas
+      document.getElementById('areas-list').innerHTML = areas.length === 0
+        ? '<p class="text-gray-500 text-center py-4">TIDAK ADA DATA</p>'
+        : areas.map(a => createMasterItem(a, 'area')).join('');
+
+      // Categories
+      document.getElementById('categories-list').innerHTML = categories.length === 0
+        ? '<p class="text-gray-500 text-center py-4">TIDAK ADA DATA</p>'
+        : categories.map(c => createMasterItem(c, 'category')).join('');
+
+      // Targets
+      document.getElementById('targets-list').innerHTML = targets.length === 0
+        ? '<p class="text-gray-500 text-center py-4">TIDAK ADA DATA</p>'
+        : targets.sort((a, b) => b.target_month.localeCompare(a.target_month)).map(t => {
+            const monthFindings = findings.filter(f => f.date && f.date.startsWith(t.target_month)).length;
+            const brft = calculateBRFT(t.target_month, t.target_value, monthFindings);
+            return `
+              <div class="flex items-center justify-between bg-gray-700 rounded-lg px-4 py-3" data-id="${t.id}">
+                <div class="flex-1">
+                  <span class="font-medium">${t.target_month}</span>
+                  <span class="text-gray-400 ml-2">TARGET: ${t.target_value}</span>
+                  <span class="text-gray-400 ml-2">TEMUAN: ${monthFindings}</span>
+                  <span class="ml-2 ${brft >= 95 ? 'text-emerald-400' : brft >= 90 ? 'text-amber-400' : 'text-red-400'}">${brft !== null ? brft.toFixed(1) + '%' : '-'}</span>
+                </div>
+                <div class="flex gap-2">
+                  <button class="edit-target text-blue-400 hover:text-blue-300 p-1" data-id="${t.id}">✏️</button>
+                  <button class="delete-target text-red-400 hover:text-red-300 p-1" data-id="${t.id}">🗑️</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+      // Findings Management
+      document.getElementById('findings-mgmt-list').innerHTML = findings.length === 0
+        ? '<tr><td colspan="4" class="py-8 text-center text-gray-500">TIDAK ADA DATA</td></tr>'
+        : findings.sort((a, b) => new Date(b.date) - new Date(a.date)).map(f => `
+            <tr class="hover:bg-gray-700/50" data-id="${f.id}">
+              <td class="py-2 px-2 text-gray-300">${f.date || '-'}</td>
+              <td class="py-2 px-2 text-gray-300">${f.area_name || '-'}</td>
+              <td class="py-2 px-2 text-gray-300">${f.batch_number || '-'}</td>
+              <td class="py-2 px-2">
+                <button class="delete-finding text-red-400 hover:text-red-300" data-id="${f.id}">🗑️</button>
+              </td>
+            </tr>
+          `).join('');
+
+      // Add event listeners
+      addManagementEventListeners();
+    }
+
+    function createMasterItem(item, type) {
+      return `
+        <div class="flex items-center justify-between bg-gray-700 rounded-lg px-4 py-3" data-id="${item.id}">
+          <span class="font-medium">${item.name}</span>
           <div class="flex gap-2">
-            <button id="confirmDeleteVsm" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg">HAPUS</button>
-            <button id="cancelDeleteVsm" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg">BATAL</button>
+            <button class="edit-${type} text-blue-400 hover:text-blue-300 p-1" data-id="${item.id}">✏️</button>
+            <button class="delete-${type} text-red-400 hover:text-red-300 p-1" data-id="${item.id}">🗑️</button>
           </div>
         </div>
       `;
-      
-      document.body.appendChild(confirmDiv);
-      
-      document.getElementById('cancelDeleteVsm').addEventListener('click', () => {
-        confirmDiv.remove();
+    }
+
+    function addManagementEventListeners() {
+      ['operator', 'product', 'area', 'category'].forEach(type => {
+        document.querySelectorAll(`.edit-${type}`).forEach(btn => {
+          btn.addEventListener('click', () => openEditModal(type, btn.dataset.id));
+        });
+        document.querySelectorAll(`.delete-${type}`).forEach(btn => {
+          btn.addEventListener('click', () => openDeleteModal(type, btn.dataset.id));
+        });
       });
-      
-      document.getElementById('confirmDeleteVsm').addEventListener('click', async () => {
-        const btn = document.getElementById('confirmDeleteVsm');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> MENGHAPUS...';
-        
+
+      document.querySelectorAll('.edit-target').forEach(btn => {
+        btn.addEventListener('click', () => openEditTargetModal(btn.dataset.id));
+      });
+      document.querySelectorAll('.delete-target').forEach(btn => {
+        btn.addEventListener('click', () => openDeleteModal('target', btn.dataset.id));
+      });
+      document.querySelectorAll('.delete-finding').forEach(btn => {
+        btn.addEventListener('click', () => openDeleteModal('finding', btn.dataset.id));
+      });
+    }
+
+    // Update Audit Table
+    function updateAuditTable(filteredLogs = null) {
+      const logs = filteredLogs || auditLogs;
+      const tbody = document.getElementById('audit-table');
+
+      if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="py-8 text-center text-gray-500">TIDAK ADA LOG</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = logs.map(log => {
+        const actionColor = log.audit_action === 'CREATE' ? 'text-emerald-400' :
+                           log.audit_action === 'UPDATE' ? 'text-blue-400' :
+                           log.audit_action === 'DELETE' ? 'text-red-400' : 'text-amber-400';
+        return `
+          <tr class="hover:bg-gray-700/50">
+            <td class="py-3 px-3 text-gray-300 text-xs">${new Date(log.audit_timestamp).toLocaleString('ID-id')}</td>
+            <td class="py-3 px-3"><span class="px-2 py-1 rounded text-xs font-medium ${actionColor}">${log.audit_action}</span></td>
+            <td class="py-3 px-3 text-gray-300 text-xs">${log.audit_details}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Modal Functions
+    function openDeleteModal(type, id) {
+      document.getElementById('delete-modal').classList.remove('hidden');
+      deleteCallback = async () => {
         try {
-          for (const item of vsmItems) {
-            const { error } = await supabaseClient
-              .from('vsm')
-              .delete()
-              .eq('id', item.id);
-            
-            if (error) throw error;
+          let tableName = '';
+          let item = null;
+
+          if (type === 'operator') {
+            tableName = 'operators';
+            item = operators.find(o => o.id === parseInt(id));
+          } else if (type === 'product') {
+            tableName = 'products';
+            item = products.find(p => p.id === parseInt(id));
+          } else if (type === 'area') {
+            tableName = 'areas';
+            item = areas.find(a => a.id === parseInt(id));
+          } else if (type === 'category') {
+            tableName = 'categories';
+            item = categories.find(c => c.id === parseInt(id));
+          } else if (type === 'target') {
+            tableName = 'targets';
+            item = targets.find(t => t.id === parseInt(id));
+          } else if (type === 'finding') {
+            tableName = 'findings';
+            item = findings.find(f => f.id === parseInt(id));
           }
-          
-          await logActivity('HAPUS VSM', `Menghapus VSM untuk produk ${kodeProduk}`);
-          await reloadData();
-          showToast('VSM BERHASIL DIHAPUS', 'success');
+
+          if (!item || !tableName) {
+            showToast('DATA TIDAK DITEMUKAN', 'error');
+            document.getElementById('delete-modal').classList.add('hidden');
+            return;
+          }
+
+          const { error } = await supabaseClient.from(tableName).delete().eq('id', item.id);
+          if (error) throw error;
+
+          await addAuditLog('DELETE', `DELETED ${type.toUpperCase()}: ${item.name || item.target_month || item.batch_number || id}`);
+          showToast('DATA BERHASIL DIHAPUS', 'success');
         } catch (error) {
-          console.error('Error deleting VSM:', error);
-          showToast('GAGAL MENGHAPUS VSM', 'error');
+          console.error('Error deleting:', error);
+          showToast('GAGAL MENGHAPUS DATA: ' + error.message, 'error');
         }
-        
-        confirmDiv.remove();
-      });
-    };
-    
-    // Master data functions
-    window.addMasterProses = async function() {
-      const name = document.getElementById('newProsesName').value.trim().toUpperCase();
-      if (!name) {
-        showToast('MASUKKAN NAMA PROSES', 'error');
-        return;
-      }
-      
-      try {
-        const { error } = await supabaseClient
-          .from('master_proses')
-          .insert([{
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            name: name,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }]);
-        
-        if (error) throw error;
-        
-        document.getElementById('newProsesName').value = '';
-        await logActivity('TAMBAH MASTER PROSES', `Menambahkan master proses: ${name}`);
-        await reloadData();
-        showToast('PROSES BERHASIL DITAMBAHKAN', 'success');
-      } catch (error) {
-        console.error('Error adding proses:', error);
-        showToast('GAGAL MENAMBAHKAN PROSES', 'error');
-      }
-    };
-    
-    window.addMasterMesin = async function() {
-      const name = document.getElementById('newMesinName').value.trim().toUpperCase();
-      if (!name) {
-        showToast('MASUKKAN NAMA MESIN', 'error');
-        return;
-      }
-      
-      try {
-        const { error } = await supabaseClient
-          .from('master_mesin')
-          .insert([{
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            name: name,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }]);
-        
-        if (error) throw error;
-        
-        document.getElementById('newMesinName').value = '';
-        await logActivity('TAMBAH MASTER MESIN', `Menambahkan master mesin: ${name}`);
-        await reloadData();
-        showToast('MESIN BERHASIL DITAMBAHKAN', 'success');
-      } catch (error) {
-        console.error('Error adding mesin:', error);
-        showToast('GAGAL MENAMBAHKAN MESIN', 'error');
-      }
-    };
-    
-    window.addMasterPersonil = async function() {
-      const name = document.getElementById('newPersonilName').value.trim().toUpperCase();
-      if (!name) {
-        showToast('MASUKKAN NAMA PERSONIL', 'error');
-        return;
-      }
-      
-      try {
-        const { error } = await supabaseClient
-          .from('master_personil')
-          .insert([{
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            name: name,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }]);
-        
-        if (error) throw error;
-        
-        document.getElementById('newPersonilName').value = '';
-        await logActivity('TAMBAH MASTER PERSONIL', `Menambahkan master personil: ${name}`);
-        await reloadData();
-        showToast('PERSONIL BERHASIL DITAMBAHKAN', 'success');
-      } catch (error) {
-        console.error('Error adding personil:', error);
-        showToast('GAGAL MENAMBAHKAN PERSONIL', 'error');
-      }
-    };
-    
-    window.addMasterProduk = async function() {
-      const kode = document.getElementById('newProdukKode').value.trim().toUpperCase();
-      const nama = document.getElementById('newProdukNama').value.trim().toUpperCase();
-      const area = document.getElementById('newProdukArea').value;
-      
-      if (!kode || !nama || !area) {
-        showToast('LENGKAPI SEMUA FIELD', 'error');
-        return;
-      }
-      
-      try {
-        const { error } = await supabaseClient
-          .from('master_produk')
-          .insert([{
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            kode_produk: kode,
-            nama_produk: nama,
-            area: area,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }]);
-        
-        if (error) throw error;
-        
-        document.getElementById('newProdukKode').value = '';
-        document.getElementById('newProdukNama').value = '';
-        document.getElementById('newProdukArea').value = '';
-        await logActivity('TAMBAH MASTER PRODUK', `Menambahkan master produk: ${kode} - ${nama} (${area})`);
-        await reloadData();
-        showToast('PRODUK BERHASIL DITAMBAHKAN', 'success');
-      } catch (error) {
-        console.error('Error adding produk:', error);
-        showToast('GAGAL MENAMBAHKAN PRODUK', 'error');
-      }
-    };
-    
-    window.deleteMasterData = async function(id, table) {
-      try {
-        const { error } = await supabaseClient
-          .from(table)
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
-        
-        await logActivity('HAPUS MASTER DATA', `Menghapus ${table}: ${id}`);
-        await reloadData();
-        showToast('DATA BERHASIL DIHAPUS', 'success');
-      } catch (error) {
-        console.error('Error deleting data:', error);
-        showToast('GAGAL MENGHAPUS DATA', 'error');
-      }
-    };
-    
-    // History login functionality
-    document.getElementById('historyLoginBtn').addEventListener('click', () => {
-      const password = document.getElementById('historyPassword').value;
-      
-      if (password === ADMIN_PASSWORD) {
-        isHistoryLoggedIn = true;
-        document.getElementById('historyLoginForm').classList.add('hidden');
-        document.getElementById('historyContent').classList.remove('hidden');
-        showToast('Login berhasil', 'success');
-        
-        populateHistoryFilters();
-        filterHistory();
-      } else {
-        showToast('Password salah', 'error');
-      }
-    });
-    
-    function populateHistoryFilters() {
-      const vsmData = allData.vsm;
-      const uniqueProducts = [...new Set(vsmData.map(d => d.kode_produk))];
-      
-      const kodeProdukSelect = document.getElementById('historyKodeProduk');
-      kodeProdukSelect.innerHTML = '<option value="">Semua produk</option>';
-      uniqueProducts.forEach(kode => {
-        const opt = document.createElement('option');
-        opt.value = kode;
-        opt.textContent = kode;
-        kodeProdukSelect.appendChild(opt);
-      });
-      
-      const personilList = allData.master_personil;
-      const personilSelect = document.getElementById('historyPersonil');
-      personilSelect.innerHTML = '<option value="">Semua personil</option>';
-      personilList.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.name;
-        opt.textContent = p.name;
-        personilSelect.appendChild(opt);
-      });
+        document.getElementById('delete-modal').classList.add('hidden');
+      };
     }
-    
-    document.getElementById('historyFilterBtn').addEventListener('click', () => {
-      filterHistory();
-    });
-    
-    document.getElementById('historyResetBtn').addEventListener('click', () => {
-      document.getElementById('historyDateFrom').value = '';
-      document.getElementById('historyDateTo').value = '';
-      document.getElementById('historyKodeProduk').value = '';
-      document.getElementById('historyPersonil').value = '';
-      filterHistory();
-    });
-    
-    function filterHistory() {
-      const dateFrom = document.getElementById('historyDateFrom').value;
-      const dateTo = document.getElementById('historyDateTo').value;
-      const kodeProduk = document.getElementById('historyKodeProduk').value;
-      const personil = document.getElementById('historyPersonil').value;
-      
-      let filtered = allData.activity_log;
-      
-      if (dateFrom) {
-        filtered = filtered.filter(d => new Date(d.created_at) >= new Date(dateFrom));
-      }
-      
-      if (dateTo) {
-        const toDate = new Date(dateTo);
-        toDate.setHours(23, 59, 59);
-        filtered = filtered.filter(d => new Date(d.created_at) <= toDate);
-      }
-      
-      if (kodeProduk) {
-        filtered = filtered.filter(d => d.description && d.description.includes(kodeProduk));
-      }
-      
-      if (personil) {
-        filtered = filtered.filter(d => d.description && d.description.includes(personil));
-      }
-      
-      const tbody = document.getElementById('historyTableBody');
-      const noMessage = document.getElementById('noHistoryMessage');
-      const tableContainer = document.getElementById('historyTableContainer');
-      
-      if (filtered.length === 0) {
-        tbody.innerHTML = '';
-        tableContainer.classList.add('hidden');
-        noMessage.classList.remove('hidden');
-        return;
-      }
-      
-      tableContainer.classList.remove('hidden');
-      noMessage.classList.add('hidden');
-      tbody.innerHTML = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(item => `
-        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-          <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${new Date(item.created_at).toLocaleDateString('id-ID')} ${new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</td>
-          <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${item.activity_type}</td>
-          <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${item.description}</td>
-          <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${item.user}</td>
-        </tr>
-      `).join('');
-    }
-    
-    document.getElementById('historyDownloadBtn').addEventListener('click', () => {
-      document.getElementById('pdfPasswordModal').classList.remove('hidden');
-      document.getElementById('pdfPasswordModal').classList.add('flex');
-      document.getElementById('pdfPasswordInput').value = '';
-    });
-    
-    document.getElementById('cancelPdfDownloadBtn').addEventListener('click', () => {
-      document.getElementById('pdfPasswordModal').classList.add('hidden');
-      document.getElementById('pdfPasswordModal').classList.remove('flex');
-    });
-    
-    document.getElementById('confirmPdfDownloadBtn').addEventListener('click', () => {
-      const password = document.getElementById('pdfPasswordInput').value;
-      
-      if (password === ADMIN_PASSWORD) {
-        document.getElementById('pdfPasswordModal').classList.add('hidden');
-        document.getElementById('pdfPasswordModal').classList.remove('flex');
-        downloadPDF();
-      } else {
-        showToast('Password salah', 'error');
-      }
-    });
-    
-    function downloadPDF() {
-      const dateFrom = document.getElementById('historyDateFrom').value;
-      const dateTo = document.getElementById('historyDateTo').value;
-      const kodeProduk = document.getElementById('historyKodeProduk').value.trim().toLowerCase();
-      const personil = document.getElementById('historyPersonil').value.trim().toLowerCase();
-      
-      let filtered = allData.vsm;
-      
-      if (dateFrom) {
-        filtered = filtered.filter(d => new Date(d.created_at) >= new Date(dateFrom));
-      }
-      
-      if (dateTo) {
-        const toDate = new Date(dateTo);
-        toDate.setHours(23, 59, 59);
-        filtered = filtered.filter(d => new Date(d.created_at) <= toDate);
-      }
-      
-      if (kodeProduk) {
-        filtered = filtered.filter(d => d.kode_produk.toLowerCase().includes(kodeProduk));
-      }
-      
-      if (personil) {
-        filtered = filtered.filter(d => d.personil.toLowerCase().includes(personil));
-      }
-      
-      if (filtered.length === 0) {
-        showToast('Tidak ada data untuk didownload', 'error');
-        return;
-      }
-      
-      let pdfContent = 'VALUE STREAM MAPPING HISTORY REPORT\n\n';
-      pdfContent += `Generated: ${new Date().toLocaleString('id-ID')}\n`;
-      pdfContent += `Total Records: ${filtered.length}\n\n`;
-      pdfContent += '='.repeat(80) + '\n\n';
-      
-      filtered.forEach((item, idx) => {
-        pdfContent += `${idx + 1}. ${item.nama_produk} (${item.kode_produk})\n`;
-        pdfContent += `   Area: ${item.area}\n`;
-        pdfContent += `   Proses: ${item.proses_name}\n`;
-        pdfContent += `   Mesin: ${item.mesin}\n`;
-        pdfContent += `   Durasi: ${item.durasi} menit\n`;
-        pdfContent += `   Personil: ${item.personil}\n`;
-        pdfContent += `   Tanggal: ${new Date(item.created_at).toLocaleDateString('id-ID')}\n`;
-        if (item.problems) {
-          pdfContent += `   Problems: ${item.problems}\n`;
+
+    function openEditModal(type, id) {
+      let item = null;
+      if (type === 'operator') item = operators.find(o => o.id === parseInt(id));
+      else if (type === 'product') item = products.find(p => p.id === parseInt(id));
+      else if (type === 'area') item = areas.find(a => a.id === parseInt(id));
+      else if (type === 'category') item = categories.find(c => c.id === parseInt(id));
+
+      if (!item) return;
+
+      document.getElementById('edit-value').value = item.name || '';
+      document.getElementById('edit-modal').classList.remove('hidden');
+
+      editCallback = async () => {
+        const newValue = document.getElementById('edit-value').value.trim().toUpperCase();
+        if (!newValue) {
+          showToast('NILAI TIDAK BOLEH KOSONG', 'error');
+          return;
         }
-        pdfContent += '\n' + '-'.repeat(80) + '\n\n';
-      });
-      
-      const blob = new Blob([pdfContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `VSM_History_${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      showToast('File berhasil didownload', 'success');
+
+        try {
+          let tableName = '';
+          if (type === 'operator') tableName = 'operators';
+          else if (type === 'product') tableName = 'products';
+          else if (type === 'area') tableName = 'areas';
+          else if (type === 'category') tableName = 'categories';
+
+          const oldValue = item.name;
+          const { error } = await supabaseClient.from(tableName).update({ name: newValue }).eq('id', item.id);
+          if (error) throw error;
+
+          await addAuditLog('UPDATE', `UPDATED ${type.toUpperCase()}: ${oldValue} → ${newValue}`);
+          showToast('DATA BERHASIL DIUPDATE', 'success');
+        } catch (error) {
+          console.error('Error updating:', error);
+          showToast('GAGAL UPDATE DATA: ' + error.message, 'error');
+        }
+        document.getElementById('edit-modal').classList.add('hidden');
+      };
     }
-    
-    // Auto refresh every 15 minutes
-    setInterval(() => {
-      console.log('Auto-refreshing data...');
-      loadAllData();
-      showToast('Data diperbarui otomatis', 'info');
-    }, 15 * 60 * 1000); // 15 minutes in milliseconds
-    
-    // Initialize
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
-    initApp();
+
+    function openEditTargetModal(id) {
+      const target = targets.find(t => t.id === parseInt(id));
+      if (!target) return;
+
+      document.getElementById('edit-value').value = target.target_value || '';
+      document.getElementById('edit-modal').classList.remove('hidden');
+
+      editCallback = async () => {
+        const newValue = parseInt(document.getElementById('edit-value').value);
+        if (isNaN(newValue) || newValue <= 0) {
+          showToast('NILAI TARGET TIDAK VALID', 'error');
+          return;
+        }
+
+        try {
+          const oldValue = target.target_value;
+          const { error } = await supabaseClient.from('targets').update({ target_value: newValue }).eq('id', target.id);
+          if (error) throw error;
+
+          await addAuditLog('UPDATE', `UPDATED TARGET ${target.target_month}: ${oldValue} → ${newValue}`);
+          showToast('TARGET BERHASIL DIUPDATE', 'success');
+        } catch (error) {
+          console.error('Error updating target:', error);
+          showToast('GAGAL UPDATE TARGET: ' + error.message, 'error');
+        }
+        document.getElementById('edit-modal').classList.add('hidden');
+      };
+    }
+
+    // Modal Event Listeners
+    document.getElementById('confirm-delete').addEventListener('click', () => {
+      if (deleteCallback) deleteCallback();
+    });
+    document.getElementById('cancel-delete').addEventListener('click', () => {
+      document.getElementById('delete-modal').classList.add('hidden');
+    });
+    document.getElementById('confirm-edit').addEventListener('click', () => {
+      if (editCallback) editCallback();
+    });
+    document.getElementById('cancel-edit').addEventListener('click', () => {
+      document.getElementById('edit-modal').classList.add('hidden');
+    });
+
+    // Finding Form Submit
+    document.getElementById('finding-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const btn = document.getElementById('submit-finding');
+      btn.disabled = true;
+      btn.innerHTML = '⏳ MENYIMPAN...';
+
+      const areaId = parseInt(document.getElementById('input-area').value);
+      const categoryId = parseInt(document.getElementById('input-category').value);
+      const productId = parseInt(document.getElementById('input-product').value);
+      const operatorId = parseInt(document.getElementById('input-operator').value);
+      const batchNumber = document.getElementById('input-batch').value.toUpperCase();
+      const description = document.getElementById('input-description').value.toUpperCase();
+      const date = document.getElementById('input-date').value;
+
+      try {
+        const { data, error } = await supabaseClient.from('findings').insert({
+          date: date,
+          area_id: areaId,
+          category_id: categoryId,
+          product_id: productId,
+          operator_id: operatorId,
+          batch_number: batchNumber,
+          description: description
+        }).select();
+
+        if (error) throw error;
+
+        // Get names for audit log
+        const area = areas.find(a => a.id === areaId)?.name || '';
+        const product = products.find(p => p.id === productId)?.name || '';
+        const category = categories.find(c => c.id === categoryId)?.name || '';
+        const operator = operators.find(o => o.id === operatorId)?.name || '';
+
+        await addAuditLog('CREATE', `NEW FINDING: BATCH ${batchNumber}, AREA ${area}`, area, product, category, operator);
+        showToast('TEMUAN BERHASIL DISIMPAN', 'success');
+        document.getElementById('finding-form').reset();
+        
+        // Force immediate reload
+        await loadAllData();
+      } catch (error) {
+        console.error('Error saving finding:', error);
+        showToast('GAGAL MENYIMPAN TEMUAN: ' + error.message, 'error');
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<span>💾</span> SIMPAN TEMUAN';
+    });
+
+    // Admin Login
+    document.getElementById('admin-login-btn').addEventListener('click', () => {
+      const password = document.getElementById('admin-password').value;
+      if (password === 'admin123') {
+        isAdminLoggedIn = true;
+        document.getElementById('admin-login').classList.add('hidden');
+        document.getElementById('admin-panel').classList.remove('hidden');
+        addAuditLog('LOGIN', 'ADMIN LOGIN SUCCESSFUL');
+        showToast('LOGIN BERHASIL', 'success');
+      } else {
+        showToast('PASSWORD SALAH', 'error');
+      }
+    });
+
+    document.getElementById('admin-logout').addEventListener('click', () => {
+      isAdminLoggedIn = false;
+      document.getElementById('admin-panel').classList.add('hidden');
+      document.getElementById('admin-login').classList.remove('hidden');
+      document.getElementById('admin-password').value = '';
+      addAuditLog('LOGOUT', 'ADMIN LOGOUT');
+      showToast('LOGOUT BERHASIL', 'info');
+    });
+
+    // Add Master Data
+    async function addMasterData(type, inputId, tableName) {
+      const input = document.getElementById(inputId);
+      const value = input.value.trim().toUpperCase();
+      if (!value) {
+        showToast('NILAI TIDAK BOLEH KOSONG', 'error');
+        return;
+      }
+
+      // Clear input immediately
+      input.value = '';
+
+      try {
+        const { data, error } = await supabaseClient.from(tableName).insert({ name: value }).select();
+        if (error) throw error;
+
+        await addAuditLog('CREATE', `NEW ${type.toUpperCase()}: ${value}`);
+        showToast(`${type.toUpperCase()} BERHASIL DITAMBAHKAN`, 'success');
+        
+        // Force immediate reload
+        await loadAllData();
+      } catch (error) {
+        console.error('Error adding master data:', error);
+        showToast('GAGAL MENAMBAHKAN DATA: ' + error.message, 'error');
+      }
+    }
+
+    document.getElementById('add-operator').addEventListener('click', () => addMasterData('operator', 'new-operator', 'operators'));
+    document.getElementById('add-product').addEventListener('click', () => addMasterData('product', 'new-product', 'products'));
+    document.getElementById('add-area').addEventListener('click', () => addMasterData('area', 'new-area', 'areas'));
+    document.getElementById('add-category').addEventListener('click', () => addMasterData('category', 'new-category', 'categories'));
+
+    // Add Target
+    document.getElementById('add-target').addEventListener('click', async () => {
+      const month = document.getElementById('new-target-month').value;
+      const value = parseInt(document.getElementById('new-target-value').value);
+
+      if (!month || isNaN(value) || value <= 0) {
+        showToast('DATA TIDAK VALID', 'error');
+        return;
+      }
+
+      const existingTarget = targets.find(t => t.target_month === month);
+      if (existingTarget) {
+        showToast('TARGET BULAN INI SUDAH ADA', 'error');
+        return;
+      }
+
+      // Clear inputs immediately
+      document.getElementById('new-target-month').value = '';
+      document.getElementById('new-target-value').value = '';
+
+      try {
+        const { data, error } = await supabaseClient.from('targets').insert({
+          target_month: month,
+          target_value: value
+        }).select();
+
+        if (error) throw error;
+
+        await addAuditLog('CREATE', `NEW TARGET: ${month} = ${value}`);
+        showToast('TARGET BERHASIL DITAMBAHKAN', 'success');
+        
+        // Force immediate reload
+        await loadAllData();
+      } catch (error) {
+        console.error('Error adding target:', error);
+        showToast('GAGAL MENAMBAHKAN TARGET: ' + error.message, 'error');
+      }
+    });
+
+    // Filters
+    document.getElementById('apply-filter').addEventListener('click', updateDashboard);
+    document.getElementById('reset-filter').addEventListener('click', () => {
+      document.getElementById('filter-date-from').value = '';
+      document.getElementById('filter-date-to').value = '';
+      document.getElementById('filter-area').value = '';
+      document.getElementById('filter-product').value = '';
+      document.getElementById('filter-category').value = '';
+      document.getElementById('filter-operator').value = '';
+      updateDashboard();
+    });
+
+    // Audit Filters
+    document.getElementById('audit-filter-btn').addEventListener('click', () => {
+      const dateFrom = document.getElementById('audit-date-from').value;
+      const dateTo = document.getElementById('audit-date-to').value;
+      const area = document.getElementById('audit-filter-area').value;
+      const product = document.getElementById('audit-filter-product').value;
+      const category = document.getElementById('audit-filter-category').value;
+      const initial = document.getElementById('audit-filter-initial').value;
+
+      let filtered = [...auditLogs];
+      if (dateFrom) filtered = filtered.filter(l => l.audit_timestamp >= dateFrom);
+      if (dateTo) filtered = filtered.filter(l => l.audit_timestamp <= dateTo + 'T23:59:59');
+      if (area) filtered = filtered.filter(l => l.audit_area === area);
+      if (product) filtered = filtered.filter(l => l.audit_product === product);
+      if (category) filtered = filtered.filter(l => l.audit_category === category);
+      if (initial) filtered = filtered.filter(l => l.audit_initial === initial);
+
+      updateAuditTable(filtered);
+    });
+
+    document.getElementById('audit-reset-btn').addEventListener('click', () => {
+      document.getElementById('audit-date-from').value = '';
+      document.getElementById('audit-date-to').value = '';
+      document.getElementById('audit-filter-area').value = '';
+      document.getElementById('audit-filter-product').value = '';
+      document.getElementById('audit-filter-category').value = '';
+      document.getElementById('audit-filter-initial').value = '';
+      updateAuditTable();
+    });
+
+    // Export PDF
+    document.getElementById('export-pdf').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text('BRFT AUDIT TRAIL REPORT', 105, 20, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text(`GENERATED: ${new Date().toLocaleString('ID-id')}`, 105, 28, { align: 'center' });
+
+      let y = 40;
+      doc.setFontSize(8);
+      doc.text('TIMESTAMP', 15, y);
+      doc.text('ACTION', 70, y);
+      doc.text('DETAILS', 100, y);
+
+      y += 5;
+      doc.line(15, y, 195, y);
+      y += 5;
+
+      auditLogs.slice(0, 50).forEach(log => {
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(new Date(log.audit_timestamp).toLocaleString('ID-id').substring(0, 20), 15, y);
+        doc.text(log.audit_action || '', 70, y);
+        doc.text((log.audit_details || '').substring(0, 60), 100, y);
+        y += 6;
+      });
+
+      doc.save(`BRFT_AUDIT_${new Date().toISOString().split('T')[0]}.pdf`);
+      showToast('PDF BERHASIL DIEXPORT', 'success');
+    });
+
+    // Theme Toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      document.body.classList.toggle('bg-gray-100');
+      document.body.classList.toggle('bg-gray-900');
+      document.body.classList.toggle('text-gray-900');
+      document.body.classList.toggle('text-gray-100');
+    });
+
+    // Set current date
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('ID-id', { 
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    }).toUpperCase();
+
+    // Initialize Data SDK
+    async function init() {
+      // Load data from Supabase
+      await loadAllData();
+
+      // Setup real-time subscriptions
+      setupRealtimeSubscriptions();
+
+      // Auto-fill date filters with current month range
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const firstDay = `${year}-${month}-01`;
+      const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+      const lastDayFormatted = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+
+      document.getElementById('filter-date-from').value = firstDay;
+      document.getElementById('filter-date-to').value = lastDayFormatted;
+    }
+
+    init();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c0b256c3350b4ac',t:'MTc2ODg3NjE4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c1fa2e2205aebfc',t:'MTc2OTA5MTA0Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
